@@ -13,16 +13,25 @@
 - Fixed F-Gas split regression
 - Fixed uniform grid (720x360)
 
-### REMIND
+### REMIND-MAgpIE
 
--
+- Update MAgPIE model version number from v4.6.7 to v4.7.0
+- Activate timber module in MAgPIE to represent managed forests
 
 ## 2023-10-11
 
 ### Gridding
 
-### REMIND
+### REMIND-MAgpIE
 
+- Update REMIND model version
+  - Update REMIND version number from v3.1.0 to v3.2.0; in particular improving near term realism within REMIND (effectively reduces remaining carbon budget)
+  - Updated assumption on OAE realization, reducing emissions from limestone calcination
+  - Remove overshoot scenarios with OAE, since the new assumptions lead to model instabilities
+  - Deactivate climate change impacts within MAgPIE
+- Update CEDS emissions reporting
+  - Fix/Improve emissions reporting to match CEDS historic emissions
+  - Reallocate OAE calcination emissions to end-use sectors
 
 # Land Use
 
