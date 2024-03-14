@@ -1,10 +1,12 @@
 # Setting `base_path` redirects everything else from there
-out_path: "../data/out"
-data_path: "../data"
-shared_path: "../../shared_path"
-# shared_path: "~/Library/CloudStorage/OneDrive-SharedLibraries-IIASA/RESCUE - Documents/WP 1/data"
-gridding_path: "$shared_path/gridding_process_files"
-proxy_path: "$shared_path/gridding_process_files/proxy_rasters"
+out_path: "../results"
+data_path: "../data/<my project>" # this needs to be changed based on where you want to store your own data
+
+history_path: "$data_path/historical"
+scenario_path: "$data_path/scenarios"
+gridding_path: "$data_path/gridding_process_files"
+proxy_path: "$data_path/gridding_process_files/proxy_rasters"
+postprocess_path: "$data_path/postprocessing"
 
 encoding:
   zlib: true

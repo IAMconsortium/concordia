@@ -31,16 +31,20 @@ class Settings:
 
     ftp: FtpSettings
 
-    # where shared stuff is stored
-    shared_path: Path
-    # where proxies are stored
-    proxy_path: Path
-    # where gridding process files are kept (should contain non-ceds-input and ceds-input folders for proxy generation)
-    gridding_path: Path
     # where to save outputs
     out_path: Path
     # where to load data from
     data_path: Path
+    # where historical data is stored
+    history_path: Path
+    # where scenario data is stored
+    scenario_path: Path
+    # where proxies are stored
+    proxy_path: Path
+    # where gridding process files are kept (should contain non-ceds-input and ceds-input folders for proxy generation)
+    gridding_path: Path
+    # where postprocessing related files are kept
+    postprocess_path: Path
 
     @staticmethod
     def resolve_paths(config):
