@@ -24,6 +24,7 @@ class Settings:
 
     base_year: int
     luc_sectors: list[str]
+    region_mappings: dict[str, dict[str, str]]
     country_combinations: dict[str, list[str]]
     variable_template: str
 
@@ -45,6 +46,19 @@ class Settings:
     gridding_path: Path
     # where postprocessing related files are kept
     postprocess_path: Path
+
+    def expand_paths(self, config):
+        def expand(path):
+            parts = path.split("/")
+            for i in range(len(parts)):
+                if parts[i].startswith("$") and hasattr(self, parts[i][1:]):
+                    parts[i] = getattr(self, parts[i][1:])
+            return Path(*parts).expanduser()
+
+        return {
+            key: expand(val) if key.endswith("path") else val
+            for key, val in config.items()
+        }
 
     @staticmethod
     def resolve_paths(config):

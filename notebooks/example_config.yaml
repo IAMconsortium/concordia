@@ -12,6 +12,13 @@ encoding:
   zlib: true
   complevel: 2
 
+region_mappings:
+  MyModelName:
+    path: "$data_path/regionmapping_mymodelname.csv"
+    country_column: "CountryCode"
+    region_column: "RegionCode"
+    sep: ";"
+
 country_combinations:
   sdn_ssd: ["ssd", "sdn"]
   isr_pse: ["isr", "pse"]
