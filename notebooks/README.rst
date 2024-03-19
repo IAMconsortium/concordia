@@ -11,6 +11,13 @@ tool, e.g.,
 
     jupytext --sync workflow.py # generates a workflow.ipynb file
 
+If you make a material change to `workflow.ipynb`, you can resync it manually if
+needed with
+
+.. code-block:: bash
+
+    jupytext --sync workflow.ipynb # updates the workflow.py file
+
 Configuration
 -------------
 
