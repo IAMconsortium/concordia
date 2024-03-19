@@ -3,6 +3,7 @@ import re
 import textwrap
 from collections import namedtuple
 from functools import cached_property
+from itertools import chain
 from typing import Iterator, Optional, Sequence
 
 import dask
@@ -102,9 +103,15 @@ class WorkflowDriver:
         if variabledefs is None:
             variabledefs = self.variabledefs
 
-        regional_proxies = set(
-            variabledefs.data.loc[~variabledefs.data["global"], "proxy_name"]
+        all_countries = self.regionmapping.data.index
+
+        # only regional
+        variabledefs = VariableDefinitions(
+            variabledefs.data.loc[lambda s: ~s["global"]]
         )
+
+        # determine proxy weights for all related proxy variables
+        regional_proxies = variabledefs.proxies
         variable_weights = [
             w.to_series()
             for w in dask.compute(
@@ -116,65 +123,64 @@ class WorkflowDriver:
                 ]
             )
         ]
+
         if not variable_weights:
-            return
-        variable_weights = concat(variable_weights)
-        all_variables = variable_weights.pix.unique(["gas", "sector"])
-        nonzero_variables = variable_weights.loc[abs(variable_weights) > 0].index
-        zero_variables = all_variables.difference(
-            nonzero_variables.pix.unique(["gas", "sector"])
-        )
+            # No proxies, so all variables fall into one group with all countries
+            country_groups = [(all_countries, variabledefs.variable_index)]
+        else:
+            variable_weights = concat(variable_weights)
 
-        def expand_subsectors(variables: pd.MultiIndex) -> pd.MultiIndex:
-            """
-            Energy Sector becomes Energy Sector|Modelled and Energy Sector|Non-
-            Modelled.
-            """
-            sectors = variabledefs.index_regional.pix.unique("sector")
-            return (
-                variables.rename({"sector": "short_sector"})
-                .join(
-                    pd.MultiIndex.from_arrays(
-                        [
-                            sectors,
-                            sectors.to_series()
-                            .str.split("|")
-                            .str[0]
-                            .rename("short_sector"),
-                        ]
-                    ),
-                    how="inner",
-                )
-                .droplevel("short_sector")
+            # Add a short_sector (which is Energy Sector for Energy Sector|Modelled)
+            variables = variabledefs.variable_index.pix.assign(
+                short_sector=variabledefs.variable_index.pix.project("sector")
+                .str.split("|")
+                .str[0]
             )
 
-        if not zero_variables.empty:
-            variables = expand_subsectors(zero_variables)
-            logger.info(
-                textwrap.fill(
-                    "No countries : " + ", ".join(variables.map("::".join)),
-                    width=88,
-                )
-            )
-            yield CountryGroup(countries=pd.Index([]), variables=variables)
+            # Bring weights into the same form as the variables we want,
+            # there are three different types of variables now:
+            # 1. those that did not show up in the proxies (here with nan)
+            # 2. those that did not have any associated weight
+            # 3. those that had ome proxy weight for some countries
+            variable_weights = variable_weights.rename_axis(
+                index={"sector": "short_sector"}
+            ).pix.semijoin(variables, how="right")
 
-        if not nonzero_variables.empty:
-            countries = (
-                expand_subsectors(nonzero_variables)
+            total_weight = (
+                abs(variable_weights).groupby(["gas", "sector"]).sum(min_count=1)
+            )
+
+            noproxy_vars = total_weight.index[total_weight.isna()]
+            emptyproxy_vars = total_weight.index[total_weight == 0]
+            weight_countries = (
+                variable_weights.index[abs(variable_weights) > 0]
+                # Only consider countries which we can harmonize and downscale
+                .join(all_countries, how="inner")
                 .to_frame()
                 .country.groupby(["gas", "sector"])
                 .apply(lambda s: tuple(sorted(s)))
             )
-            for cntries, variables in countries.index.groupby(countries).items():
-                logger.info(
-                    textwrap.fill(
-                        print_list(cntries, n=40)
-                        + " : "
-                        + ", ".join(variables.map("::".join)),
-                        width=88,
-                    )
+
+            country_groups = chain(
+                [
+                    (all_countries, noproxy_vars),  # type 1
+                    ([], emptyproxy_vars),  # type 2
+                ],
+                weight_countries.index.groupby(weight_countries).items(),  # type 3
+            )
+
+        for countries, variables in country_groups:
+            if variables.empty:
+                continue
+            logger.info(
+                textwrap.fill(
+                    print_list(countries, n=40)
+                    + " : "
+                    + ", ".join(variables.map("::".join)),
+                    width=88,
                 )
-                yield CountryGroup(countries=pd.Index(cntries), variables=variables)
+            )
+            yield CountryGroup(countries=pd.Index(countries), variables=variables)
 
     def harmdown_global(
         self, variabledefs: Optional[VariableDefinitions] = None
