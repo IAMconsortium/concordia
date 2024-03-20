@@ -120,9 +120,9 @@ class Proxy:
         name = df["proxy_name"].unique().item()
         proxy = xr.concat(
             [
-                xr.open_dataset(proxy_dir / proxy_path, chunks="auto").chunk(
-                    {"lat": -1, "lon": -1}
-                )["emissions"]
+                xr.open_dataset(
+                    proxy_dir / proxy_path, chunks="auto", engine="h5netcdf"
+                ).chunk({"lat": -1, "lon": -1})["emissions"]
                 for proxy_path in df["proxy_path"].unique()
             ],
             dim="sector",
