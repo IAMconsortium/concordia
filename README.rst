@@ -1,5 +1,5 @@
-`concordia` - Harmonization, downscaling and gridding of energy data
-=================================
+`concordia` - Harmonization, downscaling and gridding of emissions data
+=======================================================================
 
 Install
 -------
@@ -26,7 +26,8 @@ You can then check to make sure your install is operating as expected
 
 Running
 -------
-The main entrypoint is `notebooks/workflow.ipynb`.
+The main entrypoint is `notebooks/workflow.ipynb`. See the README file in
+`notebooks`.
 
 License
 -------

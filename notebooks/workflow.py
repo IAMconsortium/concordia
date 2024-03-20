@@ -23,6 +23,12 @@ import aneris
 aneris.__file__
 
 # %%
+import concordia
+
+
+concordia.__file__
+
+# %%
 import logging
 from pathlib import Path
 
@@ -64,7 +70,7 @@ ur = set_openscm_registry_as_default()
 #
 
 # %%
-settings = Settings.from_config(version="2024-03-13")
+settings = Settings.from_config(version="2024-03-14")
 
 # %%
 fh = logging.FileHandler(settings.out_path / f"debug_{settings.version}.log", mode="w")
@@ -103,15 +109,17 @@ variabledefs.data.tail()
 #
 
 # %%
-regionmapping = RegionMapping.from_regiondef(
-    settings.shared_path / "iam_files/rescue/regionmappingH12.csv",
-    country_column="CountryCode",
-    region_column="RegionCode",
-    sep=";",
-)
-regionmapping.data = regionmapping.data.pix.aggregate(
-    country=settings.country_combinations, agg_func="last"
-)
+settings.data_path
+
+# %%
+regionmappings = {}
+
+for model, kwargs in settings.region_mappings.items():
+    regionmapping = RegionMapping.from_regiondef(**settings.expand_paths(kwargs))
+    regionmapping.data = regionmapping.data.pix.aggregate(
+        country=settings.country_combinations, agg_func="last"
+    )
+    regionmappings[model] = regionmapping
 
 # %% [markdown]
 # ## Model and historic data read in
@@ -122,7 +130,7 @@ regionmapping.data = regionmapping.data.pix.aggregate(
 # %%
 hist_ceds = (
     pd.read_csv(
-        settings.shared_path / "historical/rescue/ceds_2017_extended.csv",
+        settings.history_path / "ceds_2017_extended.csv",
         index_col=list(range(4)),
     )
     .rename(index={"NMVOC": "VOC", "SO2": "Sulfur"}, level="gas")
@@ -135,7 +143,7 @@ hist_ceds = (
 # %%
 hist_global = (
     pd.read_excel(
-        settings.shared_path / "historical/rescue/global_trajectories.xlsx",
+        settings.history_path / "global_trajectories.xlsx",
         index_col=list(range(5)),
     )
     .rename_axis(index=str.lower)
@@ -147,7 +155,7 @@ hist_global = (
 
 # %%
 hist_gfed = pd.read_csv(
-    settings.shared_path / "historical/rescue/gfed/GFED2015_extended.csv",
+    settings.history_path / "gfed/GFED2015_extended.csv",
     index_col=list(range(5)),
 ).rename(columns=int)
 
@@ -177,8 +185,7 @@ def patch_model_variable(var):
 with ur.context("AR4GWP100"):
     model = (
         pd.read_csv(
-            settings.shared_path
-            / "iam_files/rescue/REMIND-MAgPIE-CEDS-RESCUE-Tier1-2023-12-13.csv",
+            settings.scenario_path / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2023-12-13.csv",
             index_col=list(range(5)),
             sep=";",
         )
@@ -205,7 +212,7 @@ model.pix
 
 # %%
 harm_overrides = pd.read_excel(
-    settings.shared_path / "iam_files" / "rescue" / "harmonization_overrides.xlsx",
+    settings.scenario_path / "harmonization_overrides.xlsx",
     index_col=list(range(3)),
 ).method
 harm_overrides
@@ -219,7 +226,7 @@ harm_overrides
 # %%
 gdp = (
     pd.read_csv(
-        settings.shared_path / "historical" / "SspDb_country_data_2013-06-12.csv",
+        settings.scenario_path / "SspDb_country_data_2013-06-12.csv",
         index_col=list(range(5)),
     )
     .rename_axis(index=str.lower)
@@ -280,11 +287,13 @@ indexraster = IndexRaster.from_netcdf(
 ).persist()
 
 # %%
+assert len(model.index.pix.project(["model"]).unique()) == 1
+model_name = model.index.pix.project(["model"]).unique()[0]
 workflow = WorkflowDriver(
     model,
     hist,
     gdp,
-    regionmapping.filter(gdp.pix.unique("country")),
+    regionmappings[model_name].filter(gdp.pix.unique("country")),
     indexraster,
     variabledefs,
     harm_overrides,

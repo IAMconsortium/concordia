@@ -334,8 +334,19 @@ class WorkflowDriver:
         callback: Optional[callable] = None,
         encoding_kwargs: Optional[dict] = None,
         verify: bool = True,
+        skip_exists: bool = False,
     ):
         def verify_and_save(pathways: Sequence[Gridded]):
+            def skip(gridded, template_fn, directory):
+                fname = gridded.fname(template_fn, directory)
+                to_skip = skip_exists and fname.exists()
+                if to_skip:
+                    logger.log(
+                        logging.INFO,
+                        f"Skipping {fname} because the file already exists",
+                    )
+                return to_skip
+
             return dask.compute(
                 (
                     gridded.to_netcdf(
@@ -348,6 +359,7 @@ class WorkflowDriver:
                     gridded.verify(compute=False) if verify else None,
                 )
                 for gridded in pathways
+                if not skip(gridded, template_fn, directory)
             )
 
         downscaled = self.harmonize_and_downscale()

@@ -73,6 +73,19 @@ class Gridded:
 
         return ds
 
+    def fname(
+        self,
+        template_fn: str,
+        directory: Optional[Pathy] = None,
+    ):
+        meta = self.meta | dict(name=self.proxy.name)
+        fn = template_fn.format(
+            **{k: v.replace("_", "-").replace(" ", "-") for k, v in meta.items()}
+        )
+        if directory is not None:
+            fn = Path(directory) / fn
+        return fn
+
     def to_netcdf(
         self,
         template_fn: str,
@@ -82,19 +95,10 @@ class Gridded:
         compute: bool = True,
     ):
         ds = self.prepare_dataset(callback)
-
-        name = self.proxy.name
-        meta = self.meta | dict(name=name)
-        fn = template_fn.format(
-            **{k: v.replace("_", "-").replace(" ", "-") for k, v in meta.items()}
-        )
-        if directory is not None:
-            fn = Path(directory) / fn
-
         encoding_kwargs = {"zlib": True, "complevel": 2} | (encoding_kwargs or {})
         return ds.to_netcdf(
-            fn,
-            encoding={name: encoding_kwargs},
+            self.fname(template_fn, directory),
+            encoding={self.proxy.name: encoding_kwargs},
             compute=compute,
         )
 
@@ -116,9 +120,9 @@ class Proxy:
         name = df["proxy_name"].unique().item()
         proxy = xr.concat(
             [
-                xr.open_dataset(proxy_dir / proxy_path, chunks="auto").chunk(
-                    {"lat": -1, "lon": -1}
-                )["emissions"]
+                xr.open_dataset(
+                    proxy_dir / proxy_path, chunks="auto", engine="h5netcdf"
+                ).chunk({"lat": -1, "lon": -1})["emissions"]
                 for proxy_path in df["proxy_path"].unique()
             ],
             dim="sector",

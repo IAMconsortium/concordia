@@ -24,6 +24,7 @@ class Settings:
 
     base_year: int
     luc_sectors: list[str]
+    region_mappings: dict[str, dict[str, str]]
     country_combinations: dict[str, list[str]]
     variable_template: str
 
@@ -31,16 +32,33 @@ class Settings:
 
     ftp: FtpSettings
 
-    # where shared stuff is stored
-    shared_path: Path
-    # where proxies are stored
-    proxy_path: Path
-    # where gridding process files are kept (should contain non-ceds-input and ceds-input folders for proxy generation)
-    gridding_path: Path
     # where to save outputs
     out_path: Path
     # where to load data from
     data_path: Path
+    # where historical data is stored
+    history_path: Path
+    # where scenario data is stored
+    scenario_path: Path
+    # where proxies are stored
+    proxy_path: Path
+    # where gridding process files are kept (should contain non-ceds-input and ceds-input folders for proxy generation)
+    gridding_path: Path
+    # where postprocessing related files are kept
+    postprocess_path: Path
+
+    def expand_paths(self, config):
+        def expand(path):
+            parts = path.split("/")
+            for i in range(len(parts)):
+                if parts[i].startswith("$") and hasattr(self, parts[i][1:]):
+                    parts[i] = getattr(self, parts[i][1:])
+            return Path(*parts).expanduser()
+
+        return {
+            key: expand(val) if key.endswith("path") else val
+            for key, val in config.items()
+        }
 
     @staticmethod
     def resolve_paths(config):
