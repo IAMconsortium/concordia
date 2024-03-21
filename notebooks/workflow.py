@@ -35,7 +35,7 @@ from pathlib import Path
 import dask
 import pandas as pd
 from dask.distributed import Client
-from pandas_indexing import concat, isin, semijoin
+from pandas_indexing import concat, isin, ismatch, semijoin
 from pandas_indexing.units import set_openscm_registry_as_default
 from ptolemy.raster import IndexRaster
 
@@ -206,7 +206,7 @@ with ur.context("AR4GWP100"):
             levels=["model", "scenario", "region", "gas", "sector", "unit"],
             settings=settings,
         )
-        # .loc[ismatch(scenario=["*-Baseline", "*-PkBudg_cp2300-OAE_off", "*-Direct-*"])]
+        .loc[~ismatch(scenario=["*Ext*"])]
     )
 model.pix
 
@@ -265,7 +265,7 @@ gdp = semijoin(
 
 # %%
 # Test with one scenario only
-one_scenario = False
+one_scenario = True
 if one_scenario:
     num_scenarios = 1
     model = model.pix.semijoin(
