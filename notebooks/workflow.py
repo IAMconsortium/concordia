@@ -265,7 +265,8 @@ gdp = semijoin(
 
 # %%
 # Test with one scenario only
-if True:
+one_scenario = False
+if one_scenario:
     num_scenarios = 1
     model = model.pix.semijoin(
         model.pix.unique(["model", "scenario"])[:num_scenarios], how="right"
@@ -320,6 +321,7 @@ res = workflow.grid(
     callback=rescue_utils.DressUp(version=settings.version),
     encoding_kwargs=dict(_FillValue=1e20),
     directory=version_path,
+    skip_exists=True,
 )
 
 # %% [markdown]
@@ -390,10 +392,7 @@ data.to_csv(version_path / f"harmonization-{settings.version}.csv")
 # %%
 hfc_distribution = (
     pd.read_excel(
-        settings.shared_path
-        / "harmonization_postprocessing"
-        / "rescue"
-        / "rescue_hfc_scenario.xlsx",
+        settings.postprocess_path / "rescue_hfc_scenario.xlsx",
         index_col=0,
         sheet_name="velders_2015",
     )
@@ -428,4 +427,6 @@ workflow.downscaled.data.to_csv(
 
 # %%
 remote_path = Path("/forcings/emissions") / settings.version
-rescue_utils.ftp_upload(settings.ftp, version_path, remote_path)
+# rescue_utils.ftp_upload(settings.ftp, version_path, remote_path)
+
+# %%
