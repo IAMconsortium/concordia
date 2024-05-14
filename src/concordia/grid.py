@@ -97,7 +97,11 @@ class Gridded:
         compute: bool = True,
     ):
         ds = self.prepare_dataset(callback)
-        encoding_kwargs = {"zlib": True, "complevel": 2} | (encoding_kwargs or {})
+        encoding_kwargs = {
+            "zlib": True,
+            "complevel": 2,
+            "_FillValue": self.proxy.data.dtype.type(1e20),
+        } | (encoding_kwargs or {})
         return ds.to_netcdf(
             self.fname(template_fn, directory),
             encoding={self.proxy.name: encoding_kwargs},

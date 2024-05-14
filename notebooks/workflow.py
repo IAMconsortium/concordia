@@ -337,7 +337,6 @@ res = workflow.grid(
         **rescue_utils.DS_ATTRS | {"version": settings.version}
     ),
     callback=rescue_utils.DressUp(version=settings.version),
-    encoding_kwargs=dict(_FillValue=1e20),
     directory=version_path,
     skip_exists=True,
 )
