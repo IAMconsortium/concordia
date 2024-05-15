@@ -1,22 +1,24 @@
 `concordia` - Harmonization, downscaling and gridding of emissions data
 =======================================================================
 
-Install
--------
+Getting Started
+---------------
 
-Conda/Mamba
-************
+We suggest using environments to install this package, and in particular using
+[`mamba`](https://mamba.readthedocs.io/en/latest/) for the fastest installation
+experience (though `conda` and `pip install` work fine too).
 
-See `environment.yml`
-
-From Source
+mamba/conda
 ***********
 
-Installing from source is as easy as
+.. code-block:: bash
+    $ mamba env create -f environment.yml
+
+pip
+***
 
 .. code-block:: bash
-
-    pip install -e .[tests]
+    $ pip install -e .[lint,rescue,test]
 
 You can then check to make sure your install is operating as expected
 
