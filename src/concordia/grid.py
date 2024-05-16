@@ -109,11 +109,13 @@ class Gridded:
 class Proxy:
     data: xr.DataArray
     indexrasters: dict[str, pt.IndexRaster]
+    cell_area: xr.DataArray | None
     name: str = "unnamed"
-    as_flux: bool = True
 
     @classmethod
-    def from_variables(cls, df, indexrasters=None, proxy_dir=None, **kwargs):
+    def from_variables(
+        cls, df, indexrasters=None, proxy_dir=None, cell_area=None, as_flux=None
+    ):
         if isinstance(df, VariableDefinitions):
             df = df.data
         if proxy_dir is None:
@@ -147,19 +149,25 @@ class Proxy:
                 f"Variables need indexrasters for all griddinglevels: {', '.join(griddinglevels)}"
             )
 
+        if as_flux is False:
+            cell_area = None
+        elif cell_area is not None:
+            cell_area = cell_area.astype(proxy.dtype, copy=False)
+        elif as_flux:
+            indexraster = next(i for i in indexrasters.values() if i is not None)
+            cell_area = indexraster.cell_area.astype(proxy.dtype, copy=False)
+
         return cls(
-            proxy, {l: indexrasters.get(l) for l in griddinglevels}, name=name, **kwargs
+            proxy,
+            {l: indexrasters.get(l) for l in griddinglevels},
+            cell_area=cell_area,
+            name=name,
         )
 
     @property
-    def cell_area(self):
-        indexraster = next(i for i in self.indexrasters.values() if i is not None)
-        return indexraster.cell_area.astype(self.data.dtype, copy=False)
-
-    @cached_property
     def proxy_as_flux(self):
         da = self.data
-        if self.as_flux:
+        if self.cell_area is not None:
             da = da / self.cell_area
         return da
 
@@ -217,7 +225,7 @@ class Proxy:
         scen = self.prepare_downscaled(downscaled)
 
         global_gridded = self.reduce_dimensions(gridded)
-        if self.as_flux:
+        if self.cell_area is not None:
             global_gridded *= self.cell_area
         global_gridded = global_gridded.sum(["lat", "lon"])
         diff = verify_global_values(
