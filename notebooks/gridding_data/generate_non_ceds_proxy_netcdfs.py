@@ -120,51 +120,26 @@ ind_co2_seasonality /= ind_co2_seasonality.sum(["lat", "lon"]).mean("month")
 # %% [markdown]
 # Rasterize natural earth ocean shape to proxy grids.
 
-
 # %%
-
 rasterize = pt.Rasterize(
     shape=(ind_co2.sizes["lat"], ind_co2.sizes["lon"]),
     coords={"lat": ind_co2.coords["lat"], "lon": ind_co2.coords["lon"]},
 )
-
 rasterize.read_shpf(
     pio.read_dataframe(
-        settings.gridding_path / "non_ceds_input" / "eez_v12.gpkg",
-        where="ISO_TER1 IS NOT NULL and POL_TYPE='200NM'",
-    )
-    .dissolve(by="ISO_TER1")
-    .reset_index(names=["iso"]),
-    idxkey="iso",
+        settings.gridding_path / "non_ceds_input" / "ne_10m_ocean"
+    ).reset_index(),
+    idxkey="index",
 )
 oae_cdr = (
     rasterize.rasterize(strategy="weighted", normalize_weights=False)
-    .sum(dim="iso")
+    .sel(index=0, drop=True)
     .assign_coords(gas="CO2", sector="OAE_CDR")
     * ind_co2_dimensions
 )
 
 # %%
-# rasterize = pt.Rasterize(
-#     shape=(ind_co2.sizes["lat"], ind_co2.sizes["lon"]),
-#     coords={"lat": ind_co2.coords["lat"], "lon": ind_co2.coords["lon"]},
-# )
-# rasterize.read_shpf(
-#     pio.read_dataframe(
-#         settings.gridding_path / "non_ceds_input" / "ne_10m_ocean"
-#     ).reset_index(),
-#     idxkey="index",
-# )
-
-# oae_cdr = (
-#     rasterize.rasterize(strategy="weighted", normalize_weights=False)
-#     .sel(index=0, drop=True)
-#     .assign_coords(gas="CO2", sector="OAE_CDR")
-#     * ind_co2_dimensions
-# )
-
-# %%
-plot_map(oae_cdr.sel(year=2050, month=1).assign_attrs(long_name="CDR OAE Uptake Ocean"))
+plot_map(oae_cdr.sel(year=2050, month=1).assign_attrs(long_name="OAE CDR emissions"))
 
 # %% [markdown]
 # ## DACCS and Industrial CDR
@@ -279,6 +254,90 @@ dac_cdr = (daccs_potential * ind_co2_dimensions).assign_coords(sector="DAC_CDR")
 missing_countries(dac_cdr.sel(month=1, year=2050, gas="CO2"))
 
 # %% [markdown]
+# # Land-Use States
+#
+# [LUH2_v2 docs](https://luh.umd.edu/LUH2/LUH2_v2f_README_v6.pdf) has a number of relevant variables
+#
+#     2.2.1	States:	(units	fraction	of	grid	cell unless	otherwise	specified)
+#
+#     c3ann: C3 annual crops
+#     c3per: C3 perennial crops
+#     c4ann: C4 annual crops
+#     c4per: C4 perennial crops
+#     c3nfx: C3 nitrogen-fixing crops
+#
+#     secdf: potentially forested secondary land
+#
+#     secmb: secondary mean biomass density (units: kg C/m^2)
+#
+# There are new variables for RESCUE however in the management file. Second generation biofuels (`crpbf_total` in LUH2) is now split into: `crpbf2_c3per` and `crpbf2_c4per`. We also have `manaf` which is "managed forest fraction of potentially forested secondary land".
+#
+#
+#     crpbf2_c3per: 2nd generation biofuels in c3 perennials
+#     crpbf2_c4per: 2nd generation biofuels in c4 perennials
+#     manaf: managed forest fraction of potentially forested secondary land
+#
+#
+# To generate spatial patterns, we average over the last 30 years of the provided data to estimate potentials in a high mitigation scenario.
+#
+
+# %%
+fname_states = "multiple-states_input4MIPs_landState_RESCUE_PIK-MAgPIE-4-7-RESCUE-dir-v2p0-PkBudg500-OAE-off-2023.12.8_gn_1995-2100.nc"
+ds_s = xr.open_dataset(
+    settings.gridding_path / "lu_gridded_files" / fname_states, decode_times=False
+).rename(longitude="lon", latitude="lat")
+ds_s
+
+# %%
+fname_manage = "multiple-management_input4MIPs_landState_RESCUE_PIK-MAgPIE-4-7-RESCUE-dir-v2p0-PkBudg500-OAE-off-2023.12.8_gn_1995-2100.nc"
+ds_m = xr.open_dataset(
+    settings.gridding_path / "lu_gridded_files" / fname_manage, decode_times=False
+).rename(longitude="lon", latitude="lat")
+ds_m
+
+# %%
+nperiods = 3
+time = range(-1, -1 - nperiods, -1)
+
+_m = ds_m.isel(time=time)
+_s = ds_s.isel(time=time)
+
+types = [
+    ("crpbf2_c3per", "c3per"),
+    ("crpbf2_c4per", "c4per"),
+    ("crpbf_c3per", "c3per"),
+    ("crpbf_c4per", "c4per"),
+    ("crpbf_c3ann", "c3ann"),
+    ("crpbf_c4ann", "c4ann"),
+    ("crpbf_c3nfx", "c3nfx"),
+]
+beccs_potential = (
+    xr.concat(
+        (
+            (_m[m_type] * _s[s_type]).assign_coords({"type": m_type})
+            for m_type, s_type in types
+        ),
+        dim="type",
+    )
+    .sum(dim="type")
+    .mean(dim="time")
+    .interp_like(ind_co2)
+    .fillna(0.0)
+)
+plot_map(beccs_potential, "BECCS potential")
+
+# %%
+ar_potential = (
+    (ds_m["manaf"] * ds_s["secdf"])
+    .isel(time=time)
+    .mean(dim="time")
+    .clip(min=0)
+    .fillna(0.0)
+    .interp_like(ind_co2)
+)
+plot_map(ar_potential, "A/R Potential per Grid Cell")
+
+# %% [markdown]
 # # Combine and Save
 #
 
@@ -290,6 +349,8 @@ da = (
             oae_cdr,
             # oae_co2, # Part of other emissions
             dac_cdr,
+            (beccs_potential * ind_co2_dimensions).assign_coords(sector="BECCS"),
+            (ar_potential * ind_co2_dimensions).assign_coords(sector="A/R"),
         ],
         dim="sector",
     )
