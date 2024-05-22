@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import ftplib
+import logging
 from collections.abc import Sequence
 from typing import Any
 
@@ -15,6 +16,8 @@ from tqdm.auto import tqdm
 
 from ..settings import FtpSettings
 
+
+logger = logging.getLogger(__name__)
 
 SECTOR_RENAMES = {
     "Energy Sector": "Energy",
@@ -269,7 +272,7 @@ def ftp_upload(cfg: FtpSettings | dict[str, Any], local_path, remote_path):
         except Exception as exc:
             raise ValueError(", ".join(transform_error(exc, path="cfg"))) from None
 
-    ftp = ftplib.FTP()
+    ftp = ftplib.FTP(timeout=30.0)
     ftp.connect(cfg.server, cfg.port)
     ftp.login(cfg.user, cfg.password)
 
@@ -289,18 +292,18 @@ def ftp_upload(cfg: FtpSettings | dict[str, Any], local_path, remote_path):
                 ltimestamp = datetime.datetime.fromtimestamp(lpath.lstat().st_mtime)
 
                 rsize = ftp.size(rpath)
-                msg += f" already on {remote_path.as_posix()}"
+                msg += f"\nalready on {remote_path.as_posix()}"
                 if rtimestamp < ltimestamp:
-                    msg += f", but local file is newer ({rtimestamp} < {ltimestamp})"
+                    msg += f",\nbut local file is newer ({rtimestamp} < {ltimestamp})"
                 elif rsize != lsize:
-                    msg += f", but file size differs ({rsize} != {lsize})"
+                    msg += f",\nbut file size differs ({rsize} != {lsize})"
                 else:
-                    print(msg + ", not uploading")
+                    logger.info(msg + ",\nnot uploading")
                     continue
             else:
-                msg += f" not on {remote_path.as_posix()}"
+                msg += f"\nnot on {remote_path.as_posix()}"
 
-            print(msg + ", uploading")
+            logger.info(msg + ", \nuploading")
             with (
                 open(lpath, "rb") as fp,
                 tqdm(total=lsize, unit="B", unit_scale=True, unit_divisor=1024) as pbar,
@@ -309,7 +312,14 @@ def ftp_upload(cfg: FtpSettings | dict[str, Any], local_path, remote_path):
                 def update_pbar(data):
                     pbar.update(len(data))
 
-                ftp.storbinary("STOR " + lpath.name, fp, callback=update_pbar)
+                try:
+                    ftp.storbinary("STOR " + lpath.name, fp, callback=update_pbar)
+                except TimeoutError:
+                    # TODO determine whether we need to reconnect in this case
+                    pass
+                except OSError as exc:
+                    if exc.args[0] != "cannot read from timed out object":
+                        raise
 
     finally:
         ftp.close()
