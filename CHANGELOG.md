@@ -2,6 +2,52 @@
 
 ## 2024-04-25
 
+- gridded dataset for 2015-2100 in 10-year for 1 scenario:
+  - RESCUE-Tier1-Direct-2023-12-13-PkBudg500-OAE_on
+- harmonized data for 2020-2100 in 5-year steps until 2060 and 10-year steps until 2100 for 29 scenarios:
+   - RESCUE-Tier1-Sensitivity-2024-04-25-Baseline
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0400-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0450-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0500-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0600-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0750-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp1000-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp1300-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp1700-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp2300-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp3000-OAE_off
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0400-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0450-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0500-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0600-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp0750-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp1000-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp1300-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp1700-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp2300-OAE_on
+   - RESCUE-Tier1-Sensitivity-2024-04-25-EocBudg_cp3000-OAE_on
+   - RESCUE-Tier1-Direct-2024-04-25-PkBudg500-OAE_off
+   - RESCUE-Tier1-Direct-2024-04-25-PkBudg1150-OAE_off
+   - RESCUE-Tier1-Direct-2024-04-25-PkBudg500-OAE_on
+   - RESCUE-Tier1-Direct-2024-04-25-PkBudg1150-OAE_on
+   - RESCUE-Tier1-Direct-2024-04-25-EocBudg500-OAE_off
+   - RESCUE-Tier1-Direct-2024-04-25-EocBudg1150-OAE_off
+   - RESCUE-Tier1-Direct-2024-04-25-EocBudg500-OAE_on
+   - RESCUE-Tier1-Direct-2024-04-25-EocBudg1150-OAE_on
+
+### Gridding
+- Add new gridded cdr variables to CO2_em_anthro variable:
+  - `CDR Afforestation` (with proposed spatial pattern),
+  - `CDR BECCS` (with proposed spatial pattern),
+  - `CDR DACCS`,
+  - `CDR EW` (no data in Tier 1 scenarios),
+  - `CDR Industry`,
+  - `CDR OAE` (with proposed spatial pattern)
+- Update definition of harmonized variables:
+  - `CO2::Aggregate - Agriculture and LUC` contains only positive LUC emissions and is harmonized to GCB 2023 (global)
+  - `CO2::CDR Afforestation` is harmonized to the negative component of GCB 2023 (`forest regrowth` at global level)
+- Fix datatype of `_FillValue` attribute to float32
+
 ### REMIND-MAgPIE
 - MAgPIE
   - Update model version from v4.7.0 to v4.7.1
