@@ -199,6 +199,16 @@ def add_sector_mapping(da, keep_sector_names=True):
     return da
 
 
+def set_sector_encoding(da):
+    if "sector" not in da.indexes:
+        return da
+
+    # Saves strings as fixed-length character types (necessary for tools like CDO)
+    da["sector"].encoding["dtype"] = "S1"
+
+    return da
+
+
 def replace_attrs(da, attrs):
     for k, v in attrs.items():
         if k in da:
@@ -257,6 +267,7 @@ class DressUp:
                 SECTOR_ORDERING_GAS.get(name, SECTOR_ORDERING_DEFAULT.get(rest)),
             )
             .pipe(add_sector_mapping)
+            .pipe(set_sector_encoding)
             .pipe(replace_attrs, ATTRS)
             .pipe(clean_var, name, gas, handle)
             .assign_attrs(ds_attrs(name, model, scenario, self.version, self.date))
