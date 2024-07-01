@@ -226,6 +226,19 @@ def clean_var(da, name, gas, handle):
     return da
 
 
+def set_var_encoding(ds, name):
+    da = ds[name]
+    da.encoding.update(
+        {
+            "zlib": True,
+            "complevel": 2,
+            "chunksizes": tuple((dict(da.sizes) | dict(time=1)).values()),
+            "_FillValue": da.dtype.type(1e20),
+        }
+    )
+    return ds
+
+
 def ds_attrs(name, model, scenario, version, date):
     gas, rest = name.split("_", 1)
     handle = DATA_HANDLES[rest]
@@ -267,6 +280,7 @@ class DressUp:
                 SECTOR_ORDERING_GAS.get(name, SECTOR_ORDERING_DEFAULT.get(rest)),
             )
             .pipe(add_sector_mapping)
+            .pipe(set_var_encoding, name)
             .pipe(set_sector_encoding)
             .pipe(replace_attrs, ATTRS)
             .pipe(clean_var, name, gas, handle)
