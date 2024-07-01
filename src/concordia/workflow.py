@@ -357,15 +357,13 @@ class WorkflowDriver:
                 variabledefs.downscaling.index, how="inner"
             )
 
+        hist_region = self.history_aggregated.regionlevel
+        if hist_region is not None:
+            hist_region = hist_region.rename_axis(index={"region": "country"})
         hist = aggregate_subsectors(
-            concat(
-                [
-                    self.hist,
-                    self.history_aggregated.regionlevel.rename_axis(
-                        index={"region": "country"}
-                    ),
-                ]
-            ).drop(self.settings.base_year, axis=1)
+            concat(skipnone(self.hist, hist_region)).drop(
+                self.settings.base_year, axis=1
+            )
         )
         downscaled, hist = downscaled.align(hist, join="left", axis=0)
         tabular = concat([hist, downscaled], axis=1)
