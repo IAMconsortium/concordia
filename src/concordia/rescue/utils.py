@@ -9,6 +9,7 @@ from typing import Any
 import cf_xarray  # noqa
 import dask
 import dateutil
+import numpy as np
 import pandas as pd
 import xarray as xr
 from cattrs import structure, transform_error
@@ -143,7 +144,11 @@ def convert_to_datetime(da: xr.DataArray) -> xr.DataArray:
             time=xr.IndexVariable(
                 "time",
                 dates,
-                encoding=dict(units="days since 2015-1-1 0:0:0", calendar="noleap"),
+                encoding=dict(
+                    units="days since 2015-1-1 0:0:0",
+                    calendar="noleap",
+                    dtype=np.dtype(float),
+                ),
             )
         )
         .transpose("time", ...)
