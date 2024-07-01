@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.16.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -299,34 +299,6 @@ ds_m
 nperiods = 3
 time = range(-1, -1 - nperiods, -1)
 
-_m = ds_m.isel(time=time)
-_s = ds_s.isel(time=time)
-
-types = [
-    ("crpbf2_c3per", "c3per"),
-    ("crpbf2_c4per", "c4per"),
-    ("crpbf_c3per", "c3per"),
-    ("crpbf_c4per", "c4per"),
-    ("crpbf_c3ann", "c3ann"),
-    ("crpbf_c4ann", "c4ann"),
-    ("crpbf_c3nfx", "c3nfx"),
-]
-beccs_potential = (
-    xr.concat(
-        (
-            (_m[m_type] * _s[s_type]).assign_coords({"type": m_type})
-            for m_type, s_type in types
-        ),
-        dim="type",
-    )
-    .sum(dim="type")
-    .mean(dim="time")
-    .interp_like(ind_co2)
-    .fillna(0.0)
-)
-plot_map(beccs_potential, "BECCS potential")
-
-# %%
 ar_potential = (
     (ds_m["manaf"] * ds_s["secdf"])
     .isel(time=time)
@@ -336,6 +308,31 @@ ar_potential = (
     .interp_like(ind_co2)
 )
 plot_map(ar_potential, "A/R Potential per Grid Cell")
+
+# %% [markdown]
+# For BECCS, we are using the LIGNO Biomass potential used for all negative emissions in CMIP6
+
+# %%
+ceds_input_gridding_path = settings.gridding_path / "ceds_input/input/gridding"
+
+
+def cmip6_beccs_potential():
+    return (
+        xr.open_dataarray(
+            ceds_input_gridding_path / "negCO2" / "LIGNOPotentialT_2010.nc", chunks={}
+        )
+        .rename(latitude="lat", longitude="lon")
+        .transpose("time", "lat", "lon")
+        .squeeze("time", drop=True)
+        .astype("float32")
+        .isel(lat=slice(None, None, -1))
+    )
+
+
+beccs_potential = cmip6_beccs_potential()
+
+# %%
+plot_map(beccs_potential, "BECCS Potential")
 
 # %% [markdown]
 # # Combine and Save

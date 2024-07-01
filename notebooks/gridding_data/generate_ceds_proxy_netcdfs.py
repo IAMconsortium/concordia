@@ -97,7 +97,7 @@ df_files = year_files.merge(
 # should have no missing files.
 assert not df_files["file_season"].isnull().any()
 
-df_files = df_files.fillna(method="pad")
+df_files = df_files.ffill()
 years = [2015] + list(range(2020, 2101, 10))
 df_files = df_files[df_files["year"].isin(years)]
 

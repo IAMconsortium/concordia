@@ -100,9 +100,7 @@ logging.getLogger("flox").setLevel("WARNING")
 #
 
 # %%
-variabledefs = VariableDefinitions.from_csv(
-    settings.data_path / "variabledefs-region.csv"
-)
+variabledefs = VariableDefinitions.from_csv(settings.variabledefs_path)
 variabledefs.data.tail()
 
 # %% [markdown]
@@ -145,11 +143,17 @@ hist_ceds = (
 # %%
 def patch_global_hist_variable(var):
     var = var.removesuffix("|Unharmonized")
-    return (
-        var
-        if any(var.endswith(s) for s in ("CDR Afforestation", "Agriculture and LUC"))
-        else f"{var}|Total"
-    )
+    if any(
+        var.endswith(s)
+        for s in ("|Aggregate - Agriculture and LUC", "|CDR Afforestation")
+    ):
+        # TODO upstream into `global_trajectories.xlsx` once this is on main
+        var = var.replace(
+            "|Aggregate - Agriculture and LUC", "|Deforestation and other LUC"
+        )
+        return var
+
+    return f"{var}|Total"
 
 
 hist_global = (
@@ -188,7 +192,13 @@ hist.head()
 
 # %%
 def patch_model_variable(var):
-    if var.endswith("|Energy Sector"):
+    if var.endswith("|Alkalinity Addition"):
+        var = settings.variable_template.format(gas="CO2", sector="Alkalinity Addition")
+    elif var.endswith("|CO2|Aggregate - Agriculture and LUC"):
+        var = var.replace(
+            "|Aggregate - Agriculture and LUC", "|Deforestation and other LUC"
+        )
+    elif var.endswith("|Energy Sector"):
         var += "|Modelled"
     return var
 

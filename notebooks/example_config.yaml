@@ -1,5 +1,6 @@
 out_path: "../results"
 data_path: "../data/<my project>" # this needs to be changed based on where you want to store your own data
+variabledefs_path: "../data/variabledefs-<my project>.csv"
 
 history_path: "$data_path/historical"
 scenario_path: "$data_path/scenarios"

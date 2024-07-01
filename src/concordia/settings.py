@@ -37,6 +37,8 @@ class Settings:
     out_path: Path
     # where to load data from
     data_path: Path
+    # where to load variabledefinitions from
+    variabledefs_path: Path
     # where historical data is stored
     history_path: Path
     # where scenario data is stored
