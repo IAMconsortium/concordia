@@ -93,13 +93,13 @@ class WorkflowDriver:
     @cached_property
     def proxies(self):
         return {
-            proxy_name: Proxy.from_variables(
-                self.variabledefs.for_proxy(proxy_name),
+            output_variable: Proxy.from_variables(
+                self.variabledefs.for_proxy(output_variable),
                 dict(country=self.indexraster_country, region=self.indexraster_region),
                 self.settings.proxy_path,
                 as_flux=True,
             )
-            for proxy_name in self.variabledefs.proxies
+            for output_variable in self.variabledefs.proxies
         }
 
     def country_groups(
@@ -120,8 +120,8 @@ class WorkflowDriver:
             for w in dask.compute(
                 *[
                     proxy.weight.countrylevel.sum("year")
-                    for proxy_name, proxy in self.proxies.items()
-                    if proxy_name in regional_proxies
+                    for output_variable, proxy in self.proxies.items()
+                    if output_variable in regional_proxies
                     and proxy.weight.countrylevel is not None
                 ]
             )
@@ -346,10 +346,10 @@ class WorkflowDriver:
             )
         )
 
-    def grid_proxy(self, proxy_name: str, downscaled: pd.DataFrame | None = None):
-        proxy = self.proxies[proxy_name]
+    def grid_proxy(self, output_variable: str, downscaled: pd.DataFrame | None = None):
+        proxy = self.proxies[output_variable]
 
-        variabledefs = self.variabledefs.for_proxy(proxy_name)
+        variabledefs = self.variabledefs.for_proxy(output_variable)
         if downscaled is None:
             downscaled = self.harmonize_and_downscale(variabledefs)
         else:
@@ -414,8 +414,10 @@ class WorkflowDriver:
         downscaled = self.harmonize_and_downscale()
 
         return {
-            proxy_name: verify_and_save(self.grid_proxy(proxy_name, downscaled))
-            for proxy_name in tqdm(self.proxies.keys())
+            output_variable: verify_and_save(
+                self.grid_proxy(output_variable, downscaled)
+            )
+            for output_variable in tqdm(self.proxies.keys())
         }
 
     @property

@@ -1,0 +1,137 @@
+gas,sector,unit,include_in_total,griddinglevel,proxy_path,output_variable,proxy_sector
+BC,Agricultural Waste Burning,Mt BC/yr,TRUE,country,openburning_BC.nc,BC_em_openburning,AWB
+BC,Agriculture,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,AGR
+BC,Aircraft,Mt BC/yr,TRUE,global,aircraft_BC.nc,BC_em_AIR_anthro,AIR
+BC,Energy Sector|Modelled,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,ENE
+BC,Energy Sector|Non-Modelled,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,ENE
+BC,Forest Burning,Mt BC/yr,TRUE,country,openburning_BC.nc,BC_em_openburning,FRTB
+BC,Grassland Burning,Mt BC/yr,TRUE,country,openburning_BC.nc,BC_em_openburning,GRSB
+BC,Industrial Sector,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,IND
+BC,International Shipping,Mt BC/yr,TRUE,global,shipping_BC.nc,BC_em_anthro,SHP
+BC,Peat Burning,Mt BC/yr,TRUE,country,openburning_BC.nc,BC_em_openburning,PEAT
+BC,Residential Commercial Other,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,RCO
+BC,Solvents Production and Application,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,SLV
+BC,Transportation Sector,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,TRA
+BC,Waste,Mt BC/yr,TRUE,country,anthro_BC.nc,BC_em_anthro,WST
+CH4,Agricultural Waste Burning,Mt CH4/yr,TRUE,country,openburning_CH4.nc,CH4_em_openburning,AWB
+CH4,Agriculture,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,AGR
+CH4,Aircraft,Mt CH4/yr,TRUE,global,aircraft_CH4.nc,CH4_em_AIR_anthro,AIR
+CH4,Energy Sector|Modelled,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,ENE
+CH4,Energy Sector|Non-Modelled,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,ENE
+CH4,Forest Burning,Mt CH4/yr,TRUE,country,openburning_CH4.nc,CH4_em_openburning,FRTB
+CH4,Grassland Burning,Mt CH4/yr,TRUE,country,openburning_CH4.nc,CH4_em_openburning,GRSB
+CH4,Industrial Sector,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,IND
+CH4,International Shipping,Mt CH4/yr,TRUE,global,shipping_CH4.nc,CH4_em_anthro,SHP
+CH4,Peat Burning,Mt CH4/yr,TRUE,country,openburning_CH4.nc,CH4_em_openburning,PEAT
+CH4,Residential Commercial Other,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,RCO
+CH4,Solvents Production and Application,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,SLV
+CH4,Transportation Sector,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,TRA
+CH4,Waste,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,WST
+CO2,Deforestation and other LUC,Mt CO2/yr,TRUE,global,CDR_CO2.nc,CO2_em_anthro,A/R
+CO2,Agriculture,Mt CO2/yr,FALSE,global,anthro_CO2.nc,CO2_em_anthro,AGR
+CO2,Aircraft,Mt CO2/yr,TRUE,global,aircraft_CO2.nc,CO2_em_AIR_anthro,AIR
+CO2,Energy Sector|Modelled,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,ENE
+CO2,Energy Sector|Non-Modelled,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,ENE
+CO2,Industrial Sector,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,IND
+CO2,International Shipping,Mt CO2/yr,TRUE,global,shipping_CO2.nc,CO2_em_anthro,SHP
+CO2,Residential Commercial Other,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,RCO
+CO2,Solvents Production and Application,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,SLV
+CO2,Transportation Sector,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,TRA
+CO2,Waste,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,WST
+CO2,OAE Calcination Emissions,Mt CO2/yr,TRUE,country,CDR_CO2.nc,CO2_em_anthro.nc,NONURB
+CO2,CDR Afforestation,Mt CO2/yr,TRUE,global,CDR_CO2.nc,CO2_em_anthro,A/R
+CO2,CDR BECCS,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,BECCS
+CO2,CDR DACCS,Mt CO2/yr,TRUE,country,CDR_CO2.nc,CO2_em_anthro,DAC_CDR
+CO2,CDR EW,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,NONURB
+CO2,CDR Industry,Mt CO2/yr,TRUE,country,CDR_CO2.nc,CO2_em_anthro,IND_CDR
+CO2,CDR OAE Uptake Ocean,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,OAE_CDR
+CO2,Alkalinity Addition,Mt ?/yr,FALSE,region,CDR_CO2.nc,CO2_em_anthro,OAE_CDR
+CO,Agricultural Waste Burning,Mt CO/yr,TRUE,country,openburning_CO.nc,CO_em_openburning,AWB
+CO,Agriculture,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,AGR
+CO,Aircraft,Mt CO/yr,TRUE,global,aircraft_CO.nc,CO_em_AIR_anthro,AIR
+CO,Energy Sector|Modelled,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,ENE
+CO,Energy Sector|Non-Modelled,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,ENE
+CO,Forest Burning,Mt CO/yr,TRUE,country,openburning_CO.nc,CO_em_openburning,FRTB
+CO,Grassland Burning,Mt CO/yr,TRUE,country,openburning_CO.nc,CO_em_openburning,GRSB
+CO,Industrial Sector,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,IND
+CO,International Shipping,Mt CO/yr,TRUE,global,shipping_CO.nc,CO_em_anthro,SHP
+CO,Peat Burning,Mt CO/yr,TRUE,country,openburning_CO.nc,CO_em_openburning,PEAT
+CO,Residential Commercial Other,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,RCO
+CO,Solvents Production and Application,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,SLV
+CO,Transportation Sector,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,TRA
+CO,Waste,Mt CO/yr,TRUE,country,anthro_CO.nc,CO_em_anthro,WST
+NH3,Agricultural Waste Burning,Mt NH3/yr,TRUE,country,openburning_NH3.nc,NH3_em_openburning,AWB
+NH3,Agriculture,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,AGR
+NH3,Aircraft,Mt NH3/yr,TRUE,global,aircraft_NH3.nc,NH3_em_AIR_anthro,AIR
+NH3,Energy Sector|Modelled,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,ENE
+NH3,Energy Sector|Non-Modelled,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,ENE
+NH3,Forest Burning,Mt NH3/yr,TRUE,country,openburning_NH3.nc,NH3_em_openburning,FRTB
+NH3,Grassland Burning,Mt NH3/yr,TRUE,country,openburning_NH3.nc,NH3_em_openburning,GRSB
+NH3,Industrial Sector,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,IND
+NH3,International Shipping,Mt NH3/yr,TRUE,global,shipping_NH3.nc,NH3_em_anthro,SHP
+NH3,Peat Burning,Mt NH3/yr,TRUE,country,openburning_NH3.nc,NH3_em_openburning,PEAT
+NH3,Residential Commercial Other,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,RCO
+NH3,Solvents Production and Application,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,SLV
+NH3,Transportation Sector,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,TRA
+NH3,Waste,Mt NH3/yr,TRUE,country,anthro_NH3.nc,NH3_em_anthro,WST
+NOx,Agricultural Waste Burning,Mt NOx/yr,TRUE,country,openburning_NOx.nc,NOx_em_openburning,AWB
+NOx,Agriculture,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,AGR
+NOx,Aircraft,Mt NOx/yr,TRUE,global,aircraft_NOx.nc,NOx_em_AIR_anthro,AIR
+NOx,Energy Sector|Modelled,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,ENE
+NOx,Energy Sector|Non-Modelled,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,ENE
+NOx,Forest Burning,Mt NOx/yr,TRUE,country,openburning_NOx.nc,NOx_em_openburning,FRTB
+NOx,Grassland Burning,Mt NOx/yr,TRUE,country,openburning_NOx.nc,NOx_em_openburning,GRSB
+NOx,Industrial Sector,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,IND
+NOx,International Shipping,Mt NOx/yr,TRUE,global,shipping_NOx.nc,NOx_em_anthro,SHP
+NOx,Peat Burning,Mt NOx/yr,TRUE,country,openburning_NOx.nc,NOx_em_openburning,PEAT
+NOx,Residential Commercial Other,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,RCO
+NOx,Solvents Production and Application,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,SLV
+NOx,Transportation Sector,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,TRA
+NOx,Waste,Mt NOx/yr,TRUE,country,anthro_NOx.nc,NOx_em_anthro,WST
+OC,Agricultural Waste Burning,Mt OC/yr,TRUE,country,openburning_OC.nc,OC_em_openburning,AWB
+OC,Agriculture,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,AGR
+OC,Aircraft,Mt OC/yr,TRUE,global,aircraft_OC.nc,OC_em_AIR_anthro,AIR
+OC,Energy Sector|Modelled,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,ENE
+OC,Energy Sector|Non-Modelled,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,ENE
+OC,Forest Burning,Mt OC/yr,TRUE,country,openburning_OC.nc,OC_em_openburning,FRTB
+OC,Grassland Burning,Mt OC/yr,TRUE,country,openburning_OC.nc,OC_em_openburning,GRSB
+OC,Industrial Sector,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,IND
+OC,International Shipping,Mt OC/yr,TRUE,global,shipping_OC.nc,OC_em_anthro,SHP
+OC,Peat Burning,Mt OC/yr,TRUE,country,openburning_OC.nc,OC_em_openburning,PEAT
+OC,Residential Commercial Other,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,RCO
+OC,Solvents Production and Application,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,SLV
+OC,Transportation Sector,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,TRA
+OC,Waste,Mt OC/yr,TRUE,country,anthro_OC.nc,OC_em_anthro,WST
+Sulfur,Agricultural Waste Burning,Mt SO2/yr,TRUE,country,openburning_Sulfur.nc,Sulfur_em_openburning,AWB
+Sulfur,Agriculture,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,AGR
+Sulfur,Aircraft,Mt SO2/yr,TRUE,global,aircraft_Sulfur.nc,Sulfur_em_AIR_anthro,AIR
+Sulfur,Energy Sector|Modelled,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,ENE
+Sulfur,Energy Sector|Non-Modelled,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,ENE
+Sulfur,Forest Burning,Mt SO2/yr,TRUE,country,openburning_Sulfur.nc,Sulfur_em_openburning,FRTB
+Sulfur,Grassland Burning,Mt SO2/yr,TRUE,country,openburning_Sulfur.nc,Sulfur_em_openburning,GRSB
+Sulfur,Industrial Sector,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,IND
+Sulfur,International Shipping,Mt SO2/yr,TRUE,global,shipping_Sulfur.nc,Sulfur_em_anthro,SHP
+Sulfur,Peat Burning,Mt SO2/yr,TRUE,country,openburning_Sulfur.nc,Sulfur_em_openburning,PEAT
+Sulfur,Residential Commercial Other,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,RCO
+Sulfur,Solvents Production and Application,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,SLV
+Sulfur,Transportation Sector,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,TRA
+Sulfur,Waste,Mt SO2/yr,TRUE,country,anthro_Sulfur.nc,Sulfur_em_anthro,WST
+VOC,Agricultural Waste Burning,Mt VOC/yr,TRUE,country,openburning_VOC.nc,VOC_em_openburning,AWB
+VOC,Agriculture,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,AGR
+VOC,Aircraft,Mt VOC/yr,TRUE,global,aircraft_VOC.nc,VOC_em_AIR_anthro,AIR
+VOC,Energy Sector|Modelled,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,ENE
+VOC,Energy Sector|Non-Modelled,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,ENE
+VOC,Forest Burning,Mt VOC/yr,TRUE,country,openburning_VOC.nc,VOC_em_openburning,FRTB
+VOC,Grassland Burning,Mt VOC/yr,TRUE,country,openburning_VOC.nc,VOC_em_openburning,GRSB
+VOC,Industrial Sector,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,IND
+VOC,International Shipping,Mt VOC/yr,TRUE,global,shipping_VOC.nc,VOC_em_anthro,SHP
+VOC,Peat Burning,Mt VOC/yr,TRUE,country,openburning_VOC.nc,VOC_em_openburning,PEAT
+VOC,Residential Commercial Other,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,RCO
+VOC,Solvents Production and Application,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,SLV
+VOC,Transportation Sector,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,TRA
+VOC,Waste,Mt VOC/yr,TRUE,country,anthro_VOC.nc,VOC_em_anthro,WST
+HFC,Total,Mt CO2eq/yr,TRUE,global,,,
+C2F6,Total,kt C2F6/yr,TRUE,global,,,
+CF4,Total,kt CF4/yr,TRUE,global,,,
+SF6,Total,kt SF6/yr,TRUE,global,,,
+N2O,Total,kt N2O/yr,TRUE,global,,,

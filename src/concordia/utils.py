@@ -58,17 +58,17 @@ class VariableDefinitions:
             ]
         )
 
-    def for_proxy(self, proxy_name: str | float) -> Self:
+    def for_proxy(self, output_variable: str | float) -> Self:
         data = self.data.loc[
-            self.data.proxy_name.isna()
-            if isna(proxy_name)
-            else (self.data.proxy_name == proxy_name)
+            self.data.output_variable.isna()
+            if isna(output_variable)
+            else (self.data.output_variable == output_variable)
         ]
         return self.__class__(data)
 
     @property
     def proxies(self):
-        return pd.Index(self.data["proxy_name"].unique()).dropna()
+        return pd.Index(self.data["output_variable"].unique()).dropna()
 
     @property
     def downscaling(self):
