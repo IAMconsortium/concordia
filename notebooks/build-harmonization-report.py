@@ -40,8 +40,8 @@ from concordia.utils import RegionMapping
 pio.templates.default = "ggplot2"
 
 # %%
-version_old = "2024-03-21"
-version = "2024-04-25"
+version_old = "2024-04-25"
+version = "2024-08-19"
 
 # %%
 settings = Settings.from_config(version=version)
@@ -62,7 +62,8 @@ for model, kwargs in settings.regionmappings.items():
 
 # %%
 def add_net_luc(df):
-    positive = df.loc[isin(sector="Aggregate - Agriculture and LUC")]
+    df = df.rename({"Aggregate - Agriculture and LUC": "Deforestation and other LUC"})
+    positive = df.loc[isin(sector="Deforestation and other LUC")]
     negative = df.loc[isin(sector="CDR Afforestation")]
 
     new_df = [df]
@@ -89,6 +90,7 @@ def read_version(version, variable_template):
             index_col=list(range(5)),
             engine="pyarrow",
         )
+        .rename_axis(index=str.lower)
         .rename(columns=int)
         .loc[
             ismatch(scenario=["*-Baseline", "*-PkBudg_cp2300-OAE_off", "*-PkBudg500-*"])
@@ -297,6 +299,7 @@ plot_harm(
     isin(region="CHA", sector="Energy Sector", gas="CH4"),
     scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on",
 )
+# plt.legend(labels=["CEDS", "CMIP6", "Unharmonized", "Harmonized"], frameon=False)
 
 # %%
 g = plot_harm(
@@ -314,7 +317,7 @@ g = plot_harm(
 
 # %%
 g = plot_harm(
-    isin(sector="Aggregate - Agriculture and LUC", gas="CO2"),
+    isin(sector="Deforestation and other LUC", gas="CO2"),
     scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on",
     useplotly=False,
 )
