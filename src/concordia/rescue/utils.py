@@ -11,7 +11,9 @@ import dateutil
 import numpy as np
 import pandas as pd
 import xarray as xr
+from attrs import define
 from cattrs import structure, transform_error
+from pandas_indexing import concat, isin
 from tqdm.auto import tqdm
 
 from ..settings import FtpSettings
@@ -354,3 +356,53 @@ def ftp_upload(cfg: FtpSettings | dict[str, Any], local_path, remote_path):
 
     finally:
         ftp.close()
+
+
+@define
+class Variants:
+    gas: str
+    sectors: list[str]
+    suffix: str
+    variable_template: str
+
+    def copy_from_default(self, data, on="variable"):
+        if on == "variable":
+            variables = [
+                self.variable_template.format(gas=self.gas, sector=sector)
+                for sector in self.sectors
+            ]
+            new_data = data.loc[isin(variable=variables)].rename(
+                index=lambda s: s + f" ({self.suffix})", level="variable"
+            )
+        elif on == "sector":
+            new_data = data.loc[isin(sector=self.sectors)].rename(
+                index=lambda s: s + f" ({self.suffix})", level="sector"
+            )
+        else:
+            raise ValueError(f"on needs to be either 'variable' or 'sector', not: {on}")
+
+        return concat([data, new_data])
+
+    def rename_suffix(self, data, from_, to, on="variable"):
+        if on == "variable":
+            renames = {}
+            for sector in self.sectors:
+                variable = self.variable_template.format(gas=self.gas, sector=sector)
+                renames[variable + from_] = variable + to
+            return data.rename(index=renames, level="variable")
+        elif on == "sector":
+            renames = {sector + from_: sector + to for sector in self.sectors}
+            return concat(
+                [
+                    data.loc[~isin(gas=self.gas)],
+                    data.loc[isin(gas=self.gas)].rename(index=renames, level=on),
+                ]
+            )
+        else:
+            raise ValueError(f"on needs to be either 'variable' or 'sector', not: {on}")
+
+    def rename_from_subsector(self, data, on="variable"):
+        return self.rename_suffix(data, f"|{self.suffix}", f" ({self.suffix})", on=on)
+
+    def rename_to_subsector(self, data, on="sector"):
+        return self.rename_suffix(data, f" ({self.suffix})", f"|{self.suffix}", on=on)

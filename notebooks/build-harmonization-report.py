@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.2
+#       jupytext_version: 1.16.4
 #   kernelspec:
 #     display_name: concordia
 #     language: python
@@ -33,6 +33,7 @@ from tqdm import tqdm
 
 from concordia import add_sticky_toc, embed_image
 from concordia.report import HEADING_TAGS, add_plotly_header
+from concordia.rescue import utils as rescue_utils
 from concordia.settings import Settings
 from concordia.utils import RegionMapping
 
@@ -45,6 +46,14 @@ version = "2024-08-19"
 
 # %%
 settings = Settings.from_config(version=version)
+
+# %%
+smoothed = rescue_utils.Variants(
+    "CO2",
+    ["Deforestation and other LUC", "CDR Afforestation", "Net LUC"],
+    suffix="Smoothed",
+    variable_template=settings.variable_template,
+)
 
 # %%
 out_path = settings.out_path / settings.version
@@ -61,10 +70,10 @@ for model, kwargs in settings.regionmappings.items():
 
 
 # %%
-def add_net_luc(df):
+def add_net_luc(df, suffix=""):
     df = df.rename({"Aggregate - Agriculture and LUC": "Deforestation and other LUC"})
-    positive = df.loc[isin(sector="Deforestation and other LUC")]
-    negative = df.loc[isin(sector="CDR Afforestation")]
+    positive = df.loc[isin(sector="Deforestation and other LUC" + suffix)]
+    negative = df.loc[isin(sector="CDR Afforestation" + suffix)]
 
     new_df = [df]
     if "World" not in negative.pix.unique("region"):
@@ -74,7 +83,7 @@ def add_net_luc(df):
             .pix.assign(region="World")
         )
         new_df.append(negative)
-    assign = {"sector": "Net LUC"}
+    assign = {"sector": "Net LUC" + suffix}
     if "method" in df.index.names:
         assign["method"] = "aggregated"
     new_df.append(positive.pix.add(negative, join="left", assign=assign))
@@ -83,6 +92,45 @@ def add_net_luc(df):
 
 
 # %%
+def aggregate_subsectors(df):
+    subsectors = (
+        df.pix.unique("sector")
+        .to_series()
+        .loc[lambda s: s.str.contains("|", regex=False)]
+    )
+    if subsectors.empty:
+        return df
+
+    df_agg = df.pix.assign(method="aggregated") if "method" in df.index.names else df
+    return concat(
+        [
+            df,
+            df_agg.pix.aggregate(
+                sector=subsectors.index.groupby(subsectors.str.split("|").str[0]),
+                mode="return",
+            ),
+        ]
+    )
+
+
+def add_variant(df, variant: rescue_utils.Variants):
+    if df.pix.unique("sector").str.endswith(f"|{variant.suffix}").any():
+        df = smoothed.rename_from_subsector(df, on="sector")
+    else:
+        df = smoothed.copy_from_default(df, on="sector")
+    return add_net_luc(df, suffix=f" ({smoothed.suffix})")
+
+
+def prepare_data(df):
+    return (
+        df.dropna(how="all", axis=1)
+        .pipe(add_net_luc)
+        .pipe(add_variant, smoothed)
+        .pipe(aggregate_subsectors)
+        .pipe(smoothed.rename_to_subsector, on="sector")
+    )
+
+
 def read_version(version, variable_template):
     data = (
         pd.read_csv(
@@ -97,50 +145,19 @@ def read_version(version, variable_template):
             | isin(model="Historic")
         ]
     )
-    model = (
-        data.pix.extract(variable=variable_template + "|Unharmonized", drop=True)
-        .dropna(how="all", axis=1)
-        .pipe(add_net_luc)
-    )
-    harm = (
-        data.pix.extract(variable=variable_template + "|Harmonized|{method}", drop=True)
-        .dropna(how="all", axis=1)
-        .pipe(add_net_luc)
-    )
+    model = data.pix.extract(
+        variable=variable_template + "|Unharmonized", drop=True
+    ).pipe(prepare_data)
+    harm = data.pix.extract(
+        variable=variable_template + "|Harmonized|{method}", drop=True
+    ).pipe(prepare_data)
     hist = (
         data.loc[isin(model="Historic")]
         .pix.extract(variable=variable_template, drop=True)
-        .dropna(how="all", axis=1)
         .pix.dropna(subset="region")
-        .pipe(add_net_luc)
+        .pipe(prepare_data)
     )
 
-    def aggregate_subsectors(df):
-        df_agg = (
-            df.pix.assign(method="aggregated") if "method" in df.index.names else df
-        )
-        return concat(
-            [
-                df,
-                df_agg.pix.aggregate(
-                    sector=subsectors.index.groupby(subsectors.str.split("|").str[0]),
-                    mode="return",
-                ),
-            ]
-        )
-
-    subsectors = (
-        harm.pix.unique("sector")
-        .to_series()
-        .loc[lambda s: s.str.contains("|", regex=False)]
-    )
-    if not subsectors.empty:
-        print(f"Aggregating subsectors {', '.join(subsectors)} in version {version}")
-        model = aggregate_subsectors(model)
-        harm = aggregate_subsectors(harm)
-        hist = aggregate_subsectors(hist)
-
-    # harm.droplevel("method").pix.aggregate(sector=)
     return model, harm, hist
 
 
@@ -175,7 +192,7 @@ def extract_sector_gas(df):
 regionmapping = regionmappings[model_name]
 
 # %%
-cmip6_hist = regionmapping.aggregate(
+cmip6_hist = (
     pd.read_csv(
         settings.data_path / "cmip6_history.csv",
         index_col=list(range(5)),
@@ -185,33 +202,40 @@ cmip6_hist = regionmapping.aggregate(
     .rename(index={"Mt CO2-eq/yr": "Mt CO2eq/yr"}, level="unit")
     .rename(columns=int)
     .pipe(extract_sector_gas)
-    .pix.assign(
-        model="CEDS",
-        scenario="CMIP6",
+    .pix.assign(model="CEDS", scenario="CMIP6")
+    .pix.aggregate(region=settings.country_combinations)
+    .pipe(
+        regionmapping.aggregate,
+        level="region",
+        keepworld=True,
+        dropna=True,
     )
-    .pix.aggregate(region=settings.country_combinations),
-    level="region",
-    keepworld=True,
-    dropna=True,
 )
 
 # %%
 # Recompute regional CO2 total (since they include wrongly fire emissions)
-cmip6_hist = concat(
-    [
-        cmip6_hist.loc[
-            ~(isin(gas="CO2", sector="Total") & ~isin(region="World"))
-            & ~isin(gas="CO2", sector="Aggregate - Agriculture and LUC")
-        ],
-        cmip6_hist.loc[isin(gas="CO2") & ~isin(sector="Total") & ~isin(region="World")]
-        .pix.assign(sector="Total")
-        .groupby(cmip6_hist.index.names)
-        .sum(),
-        cmip6_hist.loc[
-            isin(gas="CO2", sector="Aggregate - Agriculture and LUC")
-        ].pix.assign(sector="Net LUC"),
-    ]
-).sort_index()
+cmip6_hist = (
+    concat(
+        [
+            cmip6_hist.loc[
+                ~(isin(gas="CO2", sector="Total") & ~isin(region="World"))
+                & ~isin(gas="CO2", sector="Aggregate - Agriculture and LUC")
+            ],
+            cmip6_hist.loc[
+                isin(gas="CO2") & ~isin(sector="Total") & ~isin(region="World")
+            ]
+            .pix.assign(sector="Total")
+            .groupby(cmip6_hist.index.names)
+            .sum(),
+            cmip6_hist.loc[
+                isin(gas="CO2", sector="Aggregate - Agriculture and LUC")
+            ].pix.assign(sector="Net LUC"),
+        ]
+    )
+    .sort_index()
+    .pipe(smoothed.copy_from_default, on="sector")
+    .pipe(smoothed.rename_to_subsector, on="sector")
+)
 
 # %%
 hist = concat([hist, cmip6_hist])
@@ -309,23 +333,26 @@ g = plot_harm(
 )
 
 # %%
+model.pix.unique("sector")
+
+# %%
+g = plot_harm(
+    isin(sector="Deforestation and other LUC|Smoothed", gas="CO2"),
+    scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on",
+    useplotly=False,
+)
+
+# %%
+g = plot_harm(
+    isin(sector="Net LUC|Smoothed", gas="CO2"),
+    scenario="RESCUE-Tier1-Sensitivity-*-Baseline",
+    useplotly=False,
+)
+
+# %%
 g = plot_harm(
     isin(sector="Net LUC", gas="CO2"),
-    scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on",
-    useplotly=False,
-)
-
-# %%
-g = plot_harm(
-    isin(sector="Deforestation and other LUC", gas="CO2"),
-    scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on",
-    useplotly=False,
-)
-
-# %%
-g = plot_harm(
-    isin(sector="CDR Afforestation", gas="CO2"),
-    scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on",
+    scenario="RESCUE-Tier1-Sensitivity-*-Baseline",
     useplotly=False,
 )
 
@@ -387,7 +414,7 @@ def shorten(scenario):
         [
             "RESCUE-Tier1-Direct-*-",
             "RESCUE-Tier1-Extension-*-",
-            "Rescue-Tier1-Sensitivity-*-",
+            "RESCUE-Tier1-Sensitivity-*-",
         ],
         scenario,
     )
@@ -435,5 +462,13 @@ files.extend(
 )
 
 # %%
+files
+
+# %%
+# !open {files[4]}
+
+# %%
 for fn in files:
     run(["aws", "s3", "cp", fn, f"s3://rescue-task1.3/harmonization/{version}/"])
+
+# %%
