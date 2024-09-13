@@ -176,10 +176,19 @@ hist_gfed = pd.read_csv(
 ).rename(columns=int)
 
 # %%
+smoothed = rescue_utils.Variants(
+    "CO2",
+    ["Deforestation and other LUC", "CDR Afforestation"],
+    suffix="Smoothed",
+    variable_template=settings.variable_template,
+)
+
+# %%
 hist = (
     concat([hist_ceds, hist_global, hist_gfed])
     .droplevel(["model", "scenario"])
     .pix.aggregate(country=settings.country_combinations)
+    .pipe(smoothed.copy_from_default)
     .pipe(
         variabledefs.load_data,
         extend_missing=True,
@@ -207,21 +216,24 @@ def patch_model_variable(var):
 with ur.context("AR4GWP100"):
     model = (
         pd.read_csv(
-            settings.scenario_path / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2024-08-19.csv",
+            settings.scenario_path
+            / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2024-08-19_add_Smoothed_LUC.csv",
             index_col=list(range(5)),
             sep=";",
         )
         .drop(["Unnamed: 21"], axis=1)
+        .rename_axis(index=str.lower)
         .rename(
             index={
                 "Mt CO2-equiv/yr": "Mt CO2eq/yr",
                 "Mt NOX/yr": "Mt NOx/yr",
                 "kt HFC134a-equiv/yr": "kt HFC134a/yr",
             },
-            level="Unit",
+            level="unit",
         )
-        .pix.convert_unit({"kt HFC134a/yr": "Mt CO2eq/yr"}, level="Unit")
-        .rename(index=patch_model_variable, level="Variable")
+        .pix.convert_unit({"kt HFC134a/yr": "Mt CO2eq/yr"})
+        .rename(index=patch_model_variable, level="variable")
+        .pipe(smoothed.rename_from_subsector)
         .pipe(
             variabledefs.load_data,
             extend_missing=True,
@@ -236,10 +248,14 @@ model.pix
 model = model.fillna(0)
 
 # %%
-harm_overrides = pd.read_excel(
-    settings.scenario_path / "harmonization_overrides.xlsx",
-    index_col=list(range(3)),
-).method
+harm_overrides = (
+    pd.read_excel(
+        settings.scenario_path / "harmonization_overrides.xlsx",
+        index_col=list(range(3)),
+    )
+    .pipe(smoothed.copy_from_default, on="sector")
+    .method
+)
 harm_overrides
 
 # %%
@@ -304,7 +320,7 @@ gdp = semijoin(
 # %%
 # Test with one scenario only
 one_scenario = False
-only_direct = True
+only_direct = False
 if one_scenario:
     model = model.loc[ismatch(scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on")]
 elif only_direct:
@@ -454,6 +470,7 @@ def rename_alkalinity_addition(df):
 # %%
 data = (
     workflow.harmonized_data.add_totals()
+    .pipe(smoothed.rename_to_subsector, on="sector")
     .to_iamc(settings.variable_template, hist_scenario="Synthetic (GFED/CEDS/Global)")
     .pipe(rename_alkalinity_addition)
     .rename_axis(index=str.capitalize)
@@ -480,6 +497,7 @@ data = (
     .add_totals()
     .aggregate_subsectors()
     .split_hfc(hfc_distribution)
+    .pipe(smoothed.rename_to_subsector, on="sector")
     .to_iamc(settings.variable_template, hist_scenario="Synthetic (GFED/CEDS/Global)")
     .pipe(rename_alkalinity_addition)
     .rename_axis(index=str.capitalize)
