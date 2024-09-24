@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.2
+#       jupytext_version: 1.16.4
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -37,6 +37,24 @@ dim_order = ["gas", "sector", "level", "year", "month", "lat", "lon"]
 # %%
 missing_countries = ReportMissingCountries(
     IndexRaster.from_netcdf(settings.gridding_path / "ssp_comb_indexraster.nc")
+)
+
+
+# %%
+# ind co2 defines the exact grid and other dimensions
+ind_co2 = (
+    xr.open_dataset(settings.proxy_path / "anthro_CO2.nc").sel(sector="IND")
+).emissions
+ind_co2
+
+# %%
+ind_co2_dimensions = xr.ones_like(ind_co2.drop_vars("sector"))
+ind_co2_seasonality = ind_co2.sum(["gas", "year"])
+ind_co2_seasonality /= ind_co2_seasonality.sum(["lat", "lon"]).mean("month")
+
+# %%
+cell_area = xr.DataArray.from_series(pt.cell_area_from_file(ind_co2_dimensions)).astype(
+    "float32"
 )
 
 # %% [markdown]
@@ -75,13 +93,14 @@ def mariteam_shipping():
 
         # make sure gas name is aligned with gas arg
         print(f"For gas {gas}, using {pth}")
-        with xr.open_dataarray(pth) as da:
+        with xr.open_dataset(pth) as da:
             return (
                 da.drop_vars(["gas"])
                 .assign_coords(gas=[gas])
                 .transpose(*dim_order, missing_dims="ignore")
                 .astype("float32")
                 .sel(lat=slice(None, None, -1))
+                / cell_area  # convert to fluxes
             )
 
     for gas in gases:
@@ -104,17 +123,6 @@ mariteam_shipping()
 # 3. Industry CDR uses the composition of renewables, CO2 storage and industry co2 emissions
 #
 
-# %%
-# ind co2 defines the exact grid and other dimensions
-ind_co2 = (
-    xr.open_dataset(settings.proxy_path / "anthro_CO2.nc").sel(sector="IND")
-).emissions
-ind_co2
-
-# %%
-ind_co2_dimensions = xr.ones_like(ind_co2.drop_vars("sector"))
-ind_co2_seasonality = ind_co2.sum(["gas", "year"])
-ind_co2_seasonality /= ind_co2_seasonality.sum(["lat", "lon"]).mean("month")
 
 # %% [markdown]
 # ## OAE CDR and emissions
@@ -329,6 +337,7 @@ def cmip6_beccs_potential():
         .squeeze("time", drop=True)
         .astype("float32")
         .isel(lat=slice(None, None, -1))
+        / cell_area  # convert to flux
     )
 
 
@@ -408,6 +417,7 @@ da = (
             (nonurban * ind_co2_dimensions).assign_coords(
                 sector="NONURB"
             ),  # Sort of a fallback
+            (landmask * ind_co2_dimensions).assign_coords(sector="LAND"),
         ],
         dim="sector",
     )

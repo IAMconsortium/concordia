@@ -227,6 +227,11 @@ def read_r_variable(file):
 
 
 @lru_cache
+def grid_area_m2():
+    return xr.DataArray.from_series(pt.cell_area_from_file(template)).astype("float32")
+
+
+@lru_cache
 def make_year_ary(fname, air=False, waste=False, with_dask=True):
     # special treatement for Waste, see https://github.com/JGCRI/CEDS/wiki/Data_and_Assumptions#proxy-derivation-for-waste-sector
     name = "emissions"
@@ -241,7 +246,9 @@ def make_year_ary(fname, air=False, waste=False, with_dask=True):
         )
     else:
         a = read_r_variable(fname)
-    da = xr.DataArray(a, coords=coords, name=name)
+
+    # convert to emissions value per m2
+    da = xr.DataArray(a, coords=coords, name=name) / grid_area_m2()
     if waste:
         # For any grid cell has a population density greater than the 1000
         # people/sq mile threshold, the population density for that grid cell is
@@ -249,14 +256,7 @@ def make_year_ary(fname, air=False, waste=False, with_dask=True):
         # density less than the threshold, the grid cell keeps its original
         # population density value.
         threshold = 1000 / 2.59e6  # people per m2
-        grid_area_m2 = xr.DataArray.from_series(
-            pt.cell_area_from_file(template)
-        ).astype("float32")
-        # casting people to people/area
-        da = da / grid_area_m2
         da = xr.where(da > threshold, threshold, da)
-        # cast back to total people
-        da = da * grid_area_m2
     return da
 
 
