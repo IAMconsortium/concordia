@@ -101,7 +101,6 @@ class WorkflowDriver:
                 self.variabledefs.for_proxy(output_variable),
                 dict(country=self.indexraster_country, region=self.indexraster_region),
                 self.settings.proxy_path,
-                as_flux=True,
             )
             for output_variable in self.variabledefs.proxies
         }

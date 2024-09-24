@@ -115,15 +115,14 @@ class Gridded:
 
 @define(slots=False)  # cached_property's need __dict__
 class Proxy:
+    # data is assumed to be given as a flux (beware: CEDS is in absolute terms)
     data: xr.DataArray
     indexrasters: dict[str, pt.IndexRaster]
-    cell_area: xr.DataArray | None
+    cell_area: xr.DataArray
     name: str = "unnamed"
 
     @classmethod
-    def from_variables(
-        cls, df, indexrasters=None, proxy_dir=None, cell_area=None, as_flux=None
-    ):
+    def from_variables(cls, df, indexrasters=None, proxy_dir=None, cell_area=None):
         if isinstance(df, VariableDefinitions):
             df = df.data
         if proxy_dir is None:
@@ -150,7 +149,7 @@ class Proxy:
             and len(df.pix.unique("gas")) == 1
             and not (proxy.indexes["gas"] == df.pix.unique("gas")).all()
         ):
-            logger.warn(
+            logger.warning(
                 "Proxy built for gas %s is being used for gas %s (sectors: %s)",
                 proxy.indexes["gas"][0],
                 df.pix.unique("gas")[0],
@@ -165,11 +164,7 @@ class Proxy:
                 f"Variables need indexrasters for all griddinglevels: {', '.join(griddinglevels)}"
             )
 
-        if as_flux is False:
-            cell_area = None
-        elif cell_area is not None:
-            cell_area = cell_area.astype(proxy.dtype, copy=False)
-        elif as_flux:
+        if cell_area is None:
             indexraster = next(i for i in indexrasters.values() if i is not None)
             cell_area = indexraster.cell_area.astype(proxy.dtype, copy=False)
 
@@ -180,18 +175,11 @@ class Proxy:
             name=name,
         )
 
-    @property
-    def proxy_as_flux(self):
-        da = self.data
-        if self.cell_area is not None:
-            da = da / self.cell_area
-        return da
-
     def reduce_dimensions(self, da):
         da = da.mean("month")
         if "level" in da.dims:
             da = da.sum("level")
-        return da
+        return da * self.cell_area
 
     @cached_property
     def weight(self):
@@ -240,10 +228,7 @@ class Proxy:
     def verify_gridded(self, gridded, downscaled, compute: bool = True):
         scen = self.prepare_downscaled(downscaled)
 
-        global_gridded = self.reduce_dimensions(gridded)
-        if self.cell_area is not None:
-            global_gridded *= self.cell_area
-        global_gridded = global_gridded.sum(["lat", "lon"])
+        global_gridded = self.reduce_dimensions(gridded).sum(["lat", "lon"])
         diff = verify_global_values(
             global_gridded, scen, self.name, ("sector", "gas", "year")
         )
@@ -272,7 +257,7 @@ class Proxy:
                 ).drop_vars(indexraster.dim)
 
             if gridded_.size > 0:
-                gridded.append(self.proxy_as_flux * gridded_)
+                gridded.append(self.data * gridded_)
 
         return Gridded(
             xr.concat(gridded, dim="sector").assign_attrs(units=f"{unit} m-2"),
