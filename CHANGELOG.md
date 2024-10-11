@@ -1,5 +1,18 @@
 # Emissions
 
+## 2024-10-11
+
+### REMIND-MAgPIE
+- MAgPIE
+  - Bugfix in LUC emissions reducing spikes from soil organic matter loss
+- REMIND
+  - Change transport policy assumptions in sensitivity runs, assuming a more
+    gradual change between very low (cp3000) and very high (cp0400) ambition
+    scenarios. Scenarios with original assumptions are still being reported
+    for comparison (and as fall-back option) and are marked with the suffix
+    `-T_Mix4`, which represents the transport policy mix that is shared by
+    all these scenarios.
+
 ## 2024-08-19
 
 - gridded dataset for 2015-2100 in 10-year steps for 8 scenarios:
