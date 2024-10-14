@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING
 
 import yaml
 from attrs import define
 from cattrs import structure, transform_error
 from cattrs.errors import ClassValidationError
 
+from .utils import Pathy
 
-Pathy = str | Path
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 @define

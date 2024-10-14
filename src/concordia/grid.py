@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 from collections import namedtuple
-from collections.abc import Callable
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import dask
 import pandas as pd
@@ -14,6 +14,10 @@ from attrs import define, field
 from pandas_indexing import isin
 
 from .utils import Pathy, VariableDefinitions
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from functools import reduce
 from itertools import chain, product
 from pathlib import Path
-from typing import Self, TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 import dask.distributed as dd
 import numpy as np
@@ -18,11 +18,14 @@ from pandas import DataFrame, isna
 from pandas.api.types import is_iterator, is_list_like
 from pandas_indexing import concat, isin
 
-from .settings import Settings
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from .settings import Settings
 
 
 logger = logging.getLogger(__name__)
-
 
 Pathy: TypeAlias = str | Path
 

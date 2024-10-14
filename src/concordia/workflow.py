@@ -4,9 +4,9 @@ import logging
 import re
 import textwrap
 from collections import namedtuple
-from collections.abc import Callable, Iterator, Sequence
 from functools import cached_property
 from itertools import chain
+from typing import TYPE_CHECKING
 
 import dask
 import pandas as pd
@@ -28,6 +28,10 @@ from .utils import (
     aggregate_subsectors,
     skipnone,
 )
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Sequence
 
 
 logger = logging.getLogger(__name__)

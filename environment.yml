@@ -2,6 +2,7 @@ name: concordia
 channels:
 - conda-forge
 dependencies:
+- typing-extensions
 - attrs
 - cattrs
 - pandas >=1.1
