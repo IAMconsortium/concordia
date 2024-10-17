@@ -17,7 +17,7 @@ from pandas_indexing.utils import print_list
 from tqdm.auto import tqdm
 
 from .downscale import downscale
-from .grid import Gridded, GriddingContext, Proxy
+from .grid import ConcordiaProxy, GriddingContext
 from .harmonize import Harmonized, harmonize
 from .settings import Settings
 from .utils import (
@@ -32,6 +32,8 @@ from .utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
+
+    from .grid import Gridded
 
 
 logger = logging.getLogger(__name__)
@@ -103,7 +105,7 @@ class WorkflowDriver:
         )
 
         return {
-            output_variable: Proxy.from_variables(
+            output_variable: ConcordiaProxy.from_variables(
                 self.variabledefs.for_proxy(output_variable),
                 context,
                 self.settings.proxy_path,
