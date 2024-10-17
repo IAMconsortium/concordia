@@ -145,6 +145,7 @@ rasterize.read_shpf(
 oae_cdr = (
     rasterize.rasterize(strategy="weighted", normalize_weights=False)
     .sel(index=0, drop=True)
+    .where(ind_co2["lat"] <= 67.5, 0)  # restrict to 67.5º like in OceanNET
     .assign_coords(gas="CO2", sector="OAE_CDR")
     * ind_co2_dimensions
 )
@@ -369,7 +370,7 @@ def rasterize_nonurbanland(year, buffer="25km"):
         / f"Buffer_{buffer}_Urb_Boundary_{year}_SSP.shp"
     )
     nonurban = gpd.GeoSeries(
-        [land.to_crs(urban.crs).unary_union.difference(urban.unary_union)],
+        [land.to_crs(urban.crs).union_all().difference(urban.union_all())],
         crs=urban.crs,
     )
 
