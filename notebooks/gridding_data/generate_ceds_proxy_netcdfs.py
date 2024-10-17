@@ -247,8 +247,19 @@ def make_year_ary(fname, air=False, waste=False, with_dask=True):
     else:
         a = read_r_variable(fname)
 
+    da = xr.DataArray(a, coords=coords, name=name)
+
     # convert to emissions value per m2
-    da = xr.DataArray(a, coords=coords, name=name) / grid_area_m2()
+
+    # not for air, because they are already given as a flux in the CEDS-files zenodo
+    # dump from 2019. The full context is difficult, but some information is in the
+    # ticket: https://github.com/JGCRI/CEDS/issues/45
+
+    # TODO: If new proxy files should be used for air, then they will be distributed
+    # by ceds again in terms of emissions and will then need to be divided by cell areas
+    # to convert to fluxes.
+    if not air:
+        da = da / grid_area_m2()
     if waste:
         # For any grid cell has a population density greater than the 1000
         # people/sq mile threshold, the population density for that grid cell is
