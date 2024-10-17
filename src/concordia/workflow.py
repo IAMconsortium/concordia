@@ -17,7 +17,7 @@ from pandas_indexing.utils import print_list
 from tqdm.auto import tqdm
 
 from .downscale import downscale
-from .grid import Gridded, Proxy
+from .grid import Gridded, GriddingContext, Proxy
 from .harmonize import Harmonized, harmonize
 from .settings import Settings
 from .utils import (
@@ -96,10 +96,16 @@ class WorkflowDriver:
 
     @cached_property
     def proxies(self):
+        context = GriddingContext(
+            indexraster_country=self.indexraster_country,
+            indexraster_region=self.indexraster_region,
+            cell_area=self.indexraster_country.cell_area,
+        )
+
         return {
             output_variable: Proxy.from_variables(
                 self.variabledefs.for_proxy(output_variable),
-                dict(country=self.indexraster_country, region=self.indexraster_region),
+                context,
                 self.settings.proxy_path,
             )
             for output_variable in self.variabledefs.proxies
@@ -122,10 +128,9 @@ class WorkflowDriver:
             w.to_series()
             for w in dask.compute(
                 *[
-                    proxy.weight.countrylevel.sum("year")
+                    proxy.weight["country"].sum("year")
                     for output_variable, proxy in self.proxies.items()
-                    if output_variable in regional_proxies
-                    and proxy.weight.countrylevel is not None
+                    if output_variable in regional_proxies and "country" in proxy.weight
                 ]
             )
         ]
