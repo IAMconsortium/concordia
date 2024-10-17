@@ -245,4 +245,4 @@ No updates.
 
 # Land Use
 
-Maintained in separate repository by PIK's MAgPIE team, see [here](https://github.com/pik-piam/mrdownscale/blob/main/runner/changelog-rescue.md).
+Maintained in separate repository by PIK's MAgPIE team, see [here](https://github.com/pik-piam/mrdownscale/blob/main/changelog.md).
