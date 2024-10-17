@@ -38,7 +38,7 @@ CO2,Residential Commercial Other,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_ant
 CO2,Solvents Production and Application,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,SLV
 CO2,Transportation Sector,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,TRA
 CO2,Waste,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,WST
-CO2,OAE Calcination Emissions,Mt CO2/yr,TRUE,country,CDR_CO2.nc,CO2_em_anthro,LAND
+CO2,OAE Calcination Emissions,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,LAND
 CO2,CDR Afforestation,Mt CO2/yr,TRUE,global,CDR_CO2.nc,CO2_em_anthro,NONURB
 CO2,CDR BECCS,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,BECCS
 CO2,CDR DACCS,Mt CO2/yr,TRUE,country,CDR_CO2.nc,CO2_em_anthro,DAC_CDR
