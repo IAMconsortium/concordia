@@ -46,7 +46,7 @@ from concordia import (
 )
 from concordia.rescue import utils as rescue_utils
 from concordia.settings import Settings
-from concordia.utils import MultiLineFormatter, extend_overrides
+from concordia.utils import DaskSetWorkerLoglevel, MultiLineFormatter, extend_overrides
 from concordia.workflow import WorkflowDriver
 
 
@@ -70,7 +70,7 @@ ur = set_openscm_registry_as_default()
 #
 
 # %%
-settings = Settings.from_config(version="2024-08-19")
+settings = Settings.from_config(version="2024-10-11")
 
 # %%
 fh = logging.FileHandler(settings.out_path / f"debug_{settings.version}.log", mode="w")
@@ -101,14 +101,11 @@ logging.getLogger("flox").setLevel("WARNING")
 
 # %%
 variabledefs = VariableDefinitions.from_csv(settings.variabledefs_path)
-variabledefs.data.tail()
+variabledefs.data.loc[isin(gas="CO2")]
 
 # %% [markdown]
 # ## RegionMapping helps reading in a region definition file
 #
-
-# %%
-settings.data_path
 
 # %%
 regionmappings = {}
@@ -216,8 +213,7 @@ def patch_model_variable(var):
 with ur.context("AR4GWP100"):
     model = (
         pd.read_csv(
-            settings.scenario_path
-            / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2024-08-19_add_Smoothed_LUC.csv",
+            settings.scenario_path / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2024-10-11.csv",
             index_col=list(range(5)),
             sep=";",
         )
@@ -242,10 +238,6 @@ with ur.context("AR4GWP100"):
         )
     )
 model.pix
-
-# %%
-#
-model = model.fillna(0)
 
 # %%
 harm_overrides = (
@@ -333,7 +325,7 @@ logger().info(
 
 # %%
 client = Client()
-# client.register_plugin(DaskSetWorkerLoglevel(logger().getEffectiveLevel()))
+client.register_plugin(DaskSetWorkerLoglevel(logger().getEffectiveLevel()))
 client.forward_logging()
 
 # %%
@@ -427,12 +419,15 @@ ds["CO2_em_anthro"].sel(sector="CDR OAE", time="2015-09-16").plot()
 ds.isnull().any(["time", "lat", "lon"])["CO2_em_anthro"].to_pandas()
 
 # %%
+gridded.verify()
+
+# %%
 reldiff, _ = dask.compute(
     gridded.verify(compute=False),
     gridded.to_netcdf(
         template_fn=(
             "{{name}}_{activity_id}_emissions_{target_mip}_{institution}-"
-            "{{model}}-{{scenario}}-{version}_{grid_label}_201501-210012.nc"
+            "{{model}}-{{scenario}}_{grid_label}_201501-210012.nc"
         ).format(**rescue_utils.DS_ATTRS | {"version": settings.version}),
         callback=rescue_utils.DressUp(version=settings.version),
         encoding_kwargs=dict(_FillValue=1e20),
