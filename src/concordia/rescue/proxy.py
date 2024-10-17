@@ -7,6 +7,7 @@ from __future__ import annotations
 import textwrap
 
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import geoutils as gu
 import matplotlib.pyplot as plt
 import xarray as xr
@@ -35,6 +36,7 @@ def plot_map(
     title: str | None = None,
     robust: bool = True,
     add_colorbar: bool | None = None,
+    borders: bool = False,
     **kwargs,
 ):
     fig, axis = plt.subplots(
@@ -43,6 +45,8 @@ def plot_map(
     axis.set_global()
     # axis.stock_img()
     axis.coastlines()
+    if borders:
+        axis.add_feature(cfeature.BORDERS)
 
     cbar_args = dict(add_colorbar=add_colorbar)
     if add_colorbar is not False:
