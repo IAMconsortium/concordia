@@ -46,7 +46,7 @@ from concordia import (
 )
 from concordia.rescue import utils as rescue_utils
 from concordia.settings import Settings
-from concordia.utils import MultiLineFormatter, extend_overrides
+from concordia.utils import DaskSetWorkerLoglevel, MultiLineFormatter, extend_overrides
 from concordia.workflow import WorkflowDriver
 
 
@@ -70,7 +70,7 @@ ur = set_openscm_registry_as_default()
 #
 
 # %%
-settings = Settings.from_config(version="2024-08-19")
+settings = Settings.from_config(version="2024-10-11")
 
 # %%
 fh = logging.FileHandler(settings.out_path / f"debug_{settings.version}.log", mode="w")
@@ -101,14 +101,11 @@ logging.getLogger("flox").setLevel("WARNING")
 
 # %%
 variabledefs = VariableDefinitions.from_csv(settings.variabledefs_path)
-variabledefs.data.tail()
+variabledefs.data.loc[isin(gas="CO2")]
 
 # %% [markdown]
 # ## RegionMapping helps reading in a region definition file
 #
-
-# %%
-settings.data_path
 
 # %%
 regionmappings = {}
@@ -176,10 +173,19 @@ hist_gfed = pd.read_csv(
 ).rename(columns=int)
 
 # %%
+smoothed = rescue_utils.Variants(
+    "CO2",
+    ["Deforestation and other LUC", "CDR Afforestation"],
+    suffix="Smoothed",
+    variable_template=settings.variable_template,
+)
+
+# %%
 hist = (
     concat([hist_ceds, hist_global, hist_gfed])
     .droplevel(["model", "scenario"])
     .pix.aggregate(country=settings.country_combinations)
+    .pipe(smoothed.copy_from_default)
     .pipe(
         variabledefs.load_data,
         extend_missing=True,
@@ -207,21 +213,23 @@ def patch_model_variable(var):
 with ur.context("AR4GWP100"):
     model = (
         pd.read_csv(
-            settings.scenario_path / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2024-08-19.csv",
+            settings.scenario_path / "REMIND-MAgPIE-CEDS-RESCUE-Tier1-2024-10-11.csv",
             index_col=list(range(5)),
             sep=";",
         )
         .drop(["Unnamed: 21"], axis=1)
+        .rename_axis(index=str.lower)
         .rename(
             index={
                 "Mt CO2-equiv/yr": "Mt CO2eq/yr",
                 "Mt NOX/yr": "Mt NOx/yr",
                 "kt HFC134a-equiv/yr": "kt HFC134a/yr",
             },
-            level="Unit",
+            level="unit",
         )
-        .pix.convert_unit({"kt HFC134a/yr": "Mt CO2eq/yr"}, level="Unit")
-        .rename(index=patch_model_variable, level="Variable")
+        .pix.convert_unit({"kt HFC134a/yr": "Mt CO2eq/yr"})
+        .rename(index=patch_model_variable, level="variable")
+        .pipe(smoothed.rename_from_subsector)
         .pipe(
             variabledefs.load_data,
             extend_missing=True,
@@ -232,14 +240,14 @@ with ur.context("AR4GWP100"):
 model.pix
 
 # %%
-#
-model = model.fillna(0)
-
-# %%
-harm_overrides = pd.read_excel(
-    settings.scenario_path / "harmonization_overrides.xlsx",
-    index_col=list(range(3)),
-).method
+harm_overrides = (
+    pd.read_excel(
+        settings.scenario_path / "harmonization_overrides.xlsx",
+        index_col=list(range(3)),
+    )
+    .pipe(smoothed.copy_from_default, on="sector")
+    .method
+)
 harm_overrides
 
 # %%
@@ -304,7 +312,7 @@ gdp = semijoin(
 # %%
 # Test with one scenario only
 one_scenario = False
-only_direct = True
+only_direct = False
 if one_scenario:
     model = model.loc[ismatch(scenario="RESCUE-Tier1-Direct-*-PkBudg500-OAE_on")]
 elif only_direct:
@@ -317,7 +325,7 @@ logger().info(
 
 # %%
 client = Client()
-# client.register_plugin(DaskSetWorkerLoglevel(logger().getEffectiveLevel()))
+client.register_plugin(DaskSetWorkerLoglevel(logger().getEffectiveLevel()))
 client.forward_logging()
 
 # %%
@@ -411,12 +419,15 @@ ds["CO2_em_anthro"].sel(sector="CDR OAE", time="2015-09-16").plot()
 ds.isnull().any(["time", "lat", "lon"])["CO2_em_anthro"].to_pandas()
 
 # %%
+gridded.verify()
+
+# %%
 reldiff, _ = dask.compute(
     gridded.verify(compute=False),
     gridded.to_netcdf(
         template_fn=(
             "{{name}}_{activity_id}_emissions_{target_mip}_{institution}-"
-            "{{model}}-{{scenario}}-{version}_{grid_label}_201501-210012.nc"
+            "{{model}}-{{scenario}}_{grid_label}_201501-210012.nc"
         ).format(**rescue_utils.DS_ATTRS | {"version": settings.version}),
         callback=rescue_utils.DressUp(version=settings.version),
         encoding_kwargs=dict(_FillValue=1e20),
@@ -454,6 +465,7 @@ def rename_alkalinity_addition(df):
 # %%
 data = (
     workflow.harmonized_data.add_totals()
+    .pipe(smoothed.rename_to_subsector, on="sector")
     .to_iamc(settings.variable_template, hist_scenario="Synthetic (GFED/CEDS/Global)")
     .pipe(rename_alkalinity_addition)
     .rename_axis(index=str.capitalize)
@@ -480,6 +492,7 @@ data = (
     .add_totals()
     .aggregate_subsectors()
     .split_hfc(hfc_distribution)
+    .pipe(smoothed.rename_to_subsector, on="sector")
     .to_iamc(settings.variable_template, hist_scenario="Synthetic (GFED/CEDS/Global)")
     .pipe(rename_alkalinity_addition)
     .rename_axis(index=str.capitalize)

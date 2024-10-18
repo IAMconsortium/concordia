@@ -28,6 +28,7 @@ CH4,Solvents Production and Application,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4
 CH4,Transportation Sector,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,TRA
 CH4,Waste,Mt CH4/yr,TRUE,country,anthro_CH4.nc,CH4_em_anthro,WST
 CO2,Deforestation and other LUC,Mt CO2/yr,TRUE,global,CDR_CO2.nc,CO2_em_anthro,NONURB
+CO2,Deforestation and other LUC (Smoothed),Mt CO2/yr,FALSE,global,,,
 CO2,Agriculture,Mt CO2/yr,FALSE,global,anthro_CO2.nc,CO2_em_anthro,AGR
 CO2,Aircraft,Mt CO2/yr,TRUE,global,aircraft_CO2.nc,CO2_em_AIR_anthro,AIR
 CO2,Energy Sector|Modelled,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,ENE
@@ -40,6 +41,7 @@ CO2,Transportation Sector,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,TRA
 CO2,Waste,Mt CO2/yr,TRUE,country,anthro_CO2.nc,CO2_em_anthro,WST
 CO2,OAE Calcination Emissions,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,LAND
 CO2,CDR Afforestation,Mt CO2/yr,TRUE,global,CDR_CO2.nc,CO2_em_anthro,NONURB
+CO2,CDR Afforestation (Smoothed),Mt CO2/yr,FALSE,global,,,
 CO2,CDR BECCS,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,BECCS
 CO2,CDR DACCS,Mt CO2/yr,TRUE,country,CDR_CO2.nc,CO2_em_anthro,DAC_CDR
 CO2,CDR EW,Mt CO2/yr,TRUE,region,CDR_CO2.nc,CO2_em_anthro,NONURB
