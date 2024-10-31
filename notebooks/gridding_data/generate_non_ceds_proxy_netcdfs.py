@@ -129,29 +129,72 @@ mariteam_shipping()
 #
 
 # %% [markdown]
-# Rasterize natural earth ocean shape to proxy grids.
+# Rasterize eez in 200NM proximity to large land masses ($area >= 2\cdot 10^{4} \,\mathrm{km}^2$)
 
 # %%
-rasterize = pt.Rasterize(
-    shape=(ind_co2.sizes["lat"], ind_co2.sizes["lon"]),
-    coords={"lat": ind_co2.coords["lat"], "lon": ind_co2.coords["lon"]},
+natearth = pio.read_dataframe(
+    settings.gridding_path
+    / "non_ceds_input"
+    / "ne_10m_admin_0_countries"
+    / "ne_10m_admin_0_countries.shp"
 )
-rasterize.read_shpf(
-    pio.read_dataframe(
-        settings.gridding_path / "non_ceds_input" / "ne_10m_ocean"
-    ).reset_index(),
-    idxkey="index",
-)
-oae_cdr = (
-    rasterize.rasterize(strategy="weighted", normalize_weights=False)
-    .sel(index=0, drop=True)
-    .where(ind_co2["lat"] <= 67.5, 0)  # restrict to 67.5º like in OceanNET
-    .assign_coords(gas="CO2", sector="OAE_CDR")
-    * ind_co2_dimensions
+eez = pio.read_dataframe(
+    settings.gridding_path / "non_ceds_input" / "eez_v12.gpkg",
+    where="POL_TYPE='200NM'",
 )
 
 # %%
-plot_map(oae_cdr.sel(year=2050, month=1).assign_attrs(long_name="OAE CDR emissions"))
+ref = ind_co2.isel(year=0, month=0, gas=0).rio.write_crs(4326)
+
+# %%
+crs_platecarree = rio.CRS.from_authority("ESRI", 54001)
+bounds = ref.rio.transform_bounds(crs_platecarree)
+transform = rio.transform.from_bounds(
+    *bounds, width=ref.sizes["lon"], height=ref.sizes["lat"]
+)
+
+# %%
+natearth_l = natearth.explode().loc[lambda df: df.to_crs("esri:54034").area > 2e10]
+largeland = (
+    gu.Vector(natearth_l)
+    .rasterize(
+        crs=crs_platecarree,
+        xres=transform.a / 10,
+        yres=transform.e / 10,
+        bounds=bounds,
+        in_value=1,
+    )
+    .proximity()
+)
+
+# %%
+eez_mask = gu.Vector(eez).rasterize(largeland, in_value=1)
+
+# %%
+oae_mask = (
+    gu.Raster(eez_mask & (largeland <= 1_852 * 200))
+    .astype(np.float32)
+    .reproject(
+        crs=rio.CRS.from_epsg(4326),
+        grid_size=ref.rio.shape[::-1],
+        bounds=rio.coords.BoundingBox(*ref.rio.bounds()),
+        resampling=rio.warp.Resampling.average,
+    )
+)
+
+# %%
+oae_cdr = ind_co2_dimensions * gu_to_xarray(oae_mask, ref).where(
+    ind_co2["lat"] <= 67.5, 0
+).assign_coords(  # restrict to 67.5º like in OceanNET
+    gas="CO2", sector="OAE_CDR"
+)
+
+# %%
+plot_map(
+    oae_cdr.sel(year=2050, month=7)
+    .squeeze()
+    .assign_attrs(long_name="OAE CDR emissions")
+)
 
 # %% [markdown]
 # ## DACCS and Industrial CDR
