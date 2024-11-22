@@ -57,6 +57,8 @@ Concepts
 
 TODO: describe harm, downscale, grid and different combinations of regional resolution
 
+See https://docs.google.com/drawings/d/1XsvCyIgC3pjaWSgZLPuYDsrjEVzdldHVhbEtrKN7xEE/edit?usp=sharing
+
 Configuration
 -------------
 
