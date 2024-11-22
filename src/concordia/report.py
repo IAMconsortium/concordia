@@ -1,12 +1,16 @@
 from base64 import b64encode
+from collections.abc import Sequence
 from io import BytesIO
 from itertools import islice
+from pathlib import Path
 from textwrap import dedent
 
 import matplotlib.pyplot as plt
+from dominate import document
 from dominate.dom_tag import dom_tag
 from dominate.tags import (
     a,
+    div,
     h1,
     h2,
     h3,
@@ -23,7 +27,13 @@ from dominate.tags import (
     ul,
 )
 from dominate.util import raw
+from filelock import FileLock
+from joblib import Parallel, delayed
+from pandas import DataFrame, Index, Series
+from pandas_indexing import isin
+from pandas_indexing.core import ensure_multiindex
 from slugify import slugify
+from tqdm.auto import tqdm
 
 
 try:
@@ -173,6 +183,97 @@ def add_sticky_toc(
         doc, tag=HEADING_TAGS[min_level - 1], toc_level=max_level, compact=compact
     )
     doc.add(nav(toc, cls="section-nav"))
+
+
+def what_changed(next, prev):
+    length = len(next)
+    if prev is None:
+        return range(length)
+    for i in range(length):
+        if prev[i] != next[i]:
+            return range(i, length)
+
+
+def make_docs(
+    plotfunc,
+    data: Series | DataFrame,
+    files: Series,
+    index: Sequence[str] | Index,
+    title: str | None = None,
+    compact: bool = False,
+    directory: Path | None = None,
+    use_plotly: bool = False,
+    n_jobs: int = 8,
+    **kwargs,
+) -> Sequence[Path]:
+    files = ensure_multiindex(files)
+
+    @delayed
+    def make_file(fn, idx):
+        sel = isin(**dict(zip(files.index.names, idx)), ignore_missing_levels=True)
+        ind = index[sel(index)] if isinstance(index, Index) else index
+        doc = make_doc(
+            plotfunc,
+            data.loc[sel],
+            ind,
+            title=f"{title}: {' - '.join(idx)}",
+            compact=False,
+            **kwargs,
+        )
+
+        if use_plotly:
+            add_plotly_header(doc)
+
+        dir = Path.cwd() if directory is None else directory
+
+        with FileLock(dir / ".lock"):
+            with open(dir / fn, "w", encoding="utf-8") as f:
+                print(doc, file=f)
+
+        return dir / fn
+
+    try:
+        return Parallel(n_jobs=n_jobs, verbose=10)(
+            make_file(fn, idx) for idx, fn in files.items()
+        )
+    finally:
+        (directory / ".lock").unlink(missing_ok=True)
+
+
+def make_doc(
+    plotfunc,
+    data: Series | DataFrame,
+    index: Sequence[str] | Index,
+    title=None,
+    compact=False,
+    **kwargs,
+) -> document:
+    doc = document(title=title)
+
+    main = doc.add(div())
+    prev_idx = None
+
+    if not isinstance(index, Index):
+        index = data.pix.unique(index).sort_values()
+
+    index = ensure_multiindex(index)
+    for idx in tqdm(index):
+        main.add([HEADING_TAGS[i](idx[i]) for i in what_changed(idx, prev_idx)])
+
+        try:
+            ax = plotfunc(
+                data.loc[isin(**dict(zip(index.names, idx)))],
+                **kwargs,
+            )
+        except ValueError:
+            print(f"During {plotfunc.__name__}({dict(zip(index.names, idx))})")
+            raise
+        main.add(embed_image(ax, close=True))
+
+        prev_idx = idx
+
+    add_sticky_toc(doc, max_level=2, compact=compact)
+    return doc
 
 
 def add_plotly_header(doc):
