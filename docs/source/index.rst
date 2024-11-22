@@ -110,8 +110,35 @@ scenario data is harmonization. As a result, we provide a specific utility -
 which constructs graphs for every processed trajectory. The resulting output can
 be generated as a static `html` file which can be served and reviewed.
 
+Adding a New Sector
+===================
 
+To add a new sector that can be processed, we need 3 things:
 
+1. a spatial proxy dataset
+2. scenario data
+3. (optional) historical data
+
+In addition to this, we need to make a few changes in the code, configuration,
+and data to accomodate the new sector.
+
+1: Add spatial-proxy generating code (e.g., in
+`concordia/notebooks/gridding_data/generate_non_ceds_proxy_netcdfs`)
+
+.. tip:: You can skip this part if you already have a proxy generated that works for your sector (e.g., non-urban land area)
+
+2. Add a line per relevant emissions species in your
+   `data/variabledefs-<myproject>.csv` that identifies the downscaling
+   resolution you want (column: `griddinglevel`) and set the values of
+   `proxy_path` `output_variable`, and `proxy_sector` consistent with what you
+   did in **Step 1**
+
+3. Add your sector in the preferred order in `concordia/src/concordia/<my
+   project>/utils.py`. The sector name here **must be identical** to the value
+   in the `sector` column for the line(s) you added in **Step 2**
+
+4. Rerun your `notebooks/workflow-<myproject>` workflow file to make sure
+   everything runs smoothly
 
 
 Key Downstream Depedencies
