@@ -1,5 +1,15 @@
 # Emissions
 
+## Next Release
+
+- A/R removal spatial pattern updated to *only* include *additional* forest
+  growth in a high mitigation scenario (subtracting from managed secondary
+  forest in the initial period). Last version: all NON-URBAN land area was used.
+- Deforestation spatial pattern updated to match initial distribution of managed
+  secondary forest. Last version: all NON-URBAN land area was used.
+- Enhanced Weathering spatial pattern now uses late-century agricultural land.
+  Last version: all NON-URBAN land area was used.
+
 ## 2024-10-11
 
 ### REMIND-MAgPIE

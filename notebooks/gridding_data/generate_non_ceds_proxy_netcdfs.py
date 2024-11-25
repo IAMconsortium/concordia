@@ -355,19 +355,56 @@ ds_m = xr.open_dataset(
 ).rename(longitude="lon", latitude="lat")
 ds_m
 
+# %% [markdown]
+# For A/R, we use the newly managed forested area secondary forested area in a deep mitigation scenario.
+
 # %%
 nperiods = 3
 time = range(-1, -1 - nperiods, -1)
 
+
+def get_ar_pot(ds_m, ds_s, time_range):
+    return (
+        (ds_m["manaf"] * ds_s["secdf"])  # Option 1: Managed area of secondary forest
+        # ds_s["secdf"] # Option 2: just secondary forest area
+        # ((1 - ds_m["manaf"]) * ds_s["secdf"]) # Option 3: Non-managed area of secondary forest
+        .isel(time=time_range).mean(dim="time")
+    )
+
+
 ar_potential = (
-    (ds_m["manaf"] * ds_s["secdf"])
+    (get_ar_pot(ds_m, ds_s, time) - get_ar_pot(ds_m, ds_s, [0]))
+    .clip(min=0)
+    .fillna(0.0)
+    .interp_like(ind_co2)
+)
+plot_map(ar_potential, "A/R Potential per Grid Cell")
+
+# %% [markdown]
+# For deforestation emission patterns, we use currently managed secondary forest. **NOTE** This is only appropriate for a mitigation scenario. A high emissions scenario with increased deforestation would need a different spatial pattern.
+
+# %%
+current_forest = (
+    get_ar_pot(ds_m, ds_s, [0]).clip(min=0).fillna(0.0).interp_like(ind_co2)
+)
+plot_map(current_forest, "Current Managed Forest per Grid Cell")
+
+# %% [markdown]
+# We additionally highlight agricultural land area
+
+# %%
+nperiods = 3
+time = range(-1, -1 - nperiods, -1)
+
+ag_potential = (
+    (ds_s["c3ann"] + ds_s["c3nfx"] + ds_s["c3per"] + ds_s["c4ann"] + ds_s["c4per"])
     .isel(time=time)
     .mean(dim="time")
     .clip(min=0)
     .fillna(0.0)
     .interp_like(ind_co2)
 )
-plot_map(ar_potential, "A/R Potential per Grid Cell")
+plot_map(ag_potential, "Agricultural land per Grid Cell")
 
 # %% [markdown]
 # For BECCS, we are using the LIGNO Biomass potential used for all negative emissions in CMIP6
@@ -463,6 +500,8 @@ da = (
             dac_cdr,
             (beccs_potential * ind_co2_dimensions).assign_coords(sector="BECCS"),
             (ar_potential * ind_co2_dimensions).assign_coords(sector="A/R"),
+            (current_forest * ind_co2_dimensions).assign_coords(sector="DEFOREST"),
+            (ag_potential * ind_co2_dimensions).assign_coords(sector="AGLAND"),
             (nonurban * ind_co2_dimensions).assign_coords(
                 sector="NONURB"
             ),  # Sort of a fallback
