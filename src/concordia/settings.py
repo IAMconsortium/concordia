@@ -99,7 +99,7 @@ class Settings:
             config_path = base_path / config_path
 
         config = dict()
-        for path in [local_config_path, config_path]:
+        for path in [config_path, local_config_path]:  # local config takes prescedence
             if path is not None:
                 with open(path) as f:
                     config.update(yaml.safe_load(f))
