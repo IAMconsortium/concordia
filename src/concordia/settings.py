@@ -39,6 +39,8 @@ class Settings:
 
     ftp: FtpSettings
 
+    # path with user-specific configuration
+    local_config_path: Path
     # where to save outputs
     out_path: Path
     # where to load data from
@@ -88,6 +90,7 @@ class Settings:
     def from_config(
         cls,
         config_path: Pathy = "config.yaml",
+        local_config_path: Pathy | None = None,
         base_path: Pathy | None = None,
         **overwrites,
     ) -> Self:
@@ -95,8 +98,11 @@ class Settings:
             base_path = Path(base_path)
             config_path = base_path / config_path
 
-        with open(config_path) as f:
-            config = yaml.safe_load(f)
+        config = dict()
+        for path in [local_config_path, config_path]:
+            if path is not None:
+                with open(path) as f:
+                    config.update(yaml.safe_load(f))
 
         # TODO might want to replace with merge for nested dictionaries
         try:

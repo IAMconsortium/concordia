@@ -1,0 +1,51 @@
+# We first read the local configuration which must include:
+# - data_path: the local path to all needed datasets
+# - ftp (optional): the FTP login details for upload at the end of a workflow
+
+local_config_path: 'local-config-rescue.yaml'
+
+# ---- standard config for RESCUE ----
+
+out_path: "../results"
+
+variabledefs_path: "../data/variabledefs-rescue.csv"
+
+history_path: "$data_path/historical"
+scenario_path: "$data_path/scenarios"
+gridding_path: "$data_path/gridding_process_files"
+proxy_path: "$data_path/gridding_process_files/proxy_rasters"
+postprocess_path: "$data_path/postprocessing"
+
+encoding:
+  zlib: true
+  complevel: 2
+
+regionmappings:
+  REMIND-MAgPIE 3.2.0-4.7.1:
+    path: "$scenario_path/regionmappingH12.csv"
+    country_column: "CountryCode"
+    region_column: "RegionCode"
+    sep: ";"
+  REMIND-MAgPIE 3.2.0-4.8.0:
+    path: "$scenario_path/regionmappingH12.csv"
+    country_column: "CountryCode"
+    region_column: "RegionCode"
+    sep: ";"
+
+country_combinations:
+  sdn_ssd: ["ssd", "sdn"]
+  isr_pse: ["isr", "pse"]
+  srb_ksv: ["srb", "srb (kosovo)"]
+
+variable_template: "CEDS+|9+ Sectors|Emissions|{gas}|{sector}"
+alkalinity_variable: "RESCUE|OAE|Alkalinity Addition"
+base_year: 2020
+
+luc_sectors:
+  - "Agricultural Waste Burning"
+  - "Grassland Burning"
+  - "Forest Burning"
+  - "Peat Burning"
+  - "Agriculture"
+  - "Aggregate - Agriculture and LUC"
+  - "CDR Afforestation"

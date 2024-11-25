@@ -7,7 +7,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.4
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: concordia
 #     language: python
 #     name: python3
 # ---
@@ -29,7 +29,12 @@ from concordia.settings import Settings
 
 
 # %%
-settings = Settings.from_config("config.yaml", base_path="..", version=None)
+settings = Settings.from_config(
+    "../config-rescue.yaml",
+    local_config_path="../local-config-rescue.yaml",
+    version=None,
+)
+settings.gridding_path, settings.gridding_path.exists()
 
 # %%
 dim_order = ["gas", "sector", "level", "year", "month", "lat", "lon"]
@@ -475,3 +480,5 @@ da.to_netcdf(
     settings.proxy_path / "CDR_CO2.nc",
     encoding={da.name: settings.encoding},
 )
+
+# %%
