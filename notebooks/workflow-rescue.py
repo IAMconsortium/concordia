@@ -56,21 +56,27 @@ ur = set_openscm_registry_as_default()
 # %% [markdown]
 # # Read model and historic data including overrides
 #
-# To run this code, create a file called `config.yaml` in this directory pointing to the correct data file locations, e.g.,
+# To run this code, create a file called `local-config-rescue.yaml` in this directory pointing to the correct data file locations, e.g.,
 #
 # ```
-# # config.yaml
-# base_path: "~/Library/CloudStorage/OneDrive-SharedLibraries-IIASA/RESCUE - WP 1/data"
-# data_path: "../data"
-# country_combinations:
-#   sdn_ssd: ["ssd", "sdn"]
-#   isr_pse: ["isr", "pse"]
-#   srb_ksv: ["srb", "srb (kosovo)"]
+# # local-config-rescue.yaml
+# data_path: "/path/to/data" # path to required RESCUE data
+# out_path: "/path/to/output" # path to where you would like to dump large quantities of generated data
+#
+# ftp: # if you want to upload to BCS FTP
+#   server: "es-ftp.bsc.es"
+#   port: 8021
+#   user: rescue
+#   password: ...
 # ```
 #
 
 # %%
-settings = Settings.from_config(version="2024-10-11")
+settings = Settings.from_config(
+    config_path="config-rescue.yaml",
+    local_config_path="local-config-rescue.yaml",
+    version="TEST-2024-11-28",
+)
 
 # %%
 fh = logging.FileHandler(settings.out_path / f"debug_{settings.version}.log", mode="w")
@@ -237,6 +243,9 @@ with ur.context("AR4GWP100"):
             settings=settings,
         )
     )
+
+model = model.loc[~ismatch(scenario="*Sensitivity*")]  # remove sensitivity cases
+
 model.pix
 
 # %%
@@ -327,6 +336,9 @@ logger().info(
 client = Client()
 client.register_plugin(DaskSetWorkerLoglevel(logger().getEffectiveLevel()))
 client.forward_logging()
+
+# %%
+dask.distributed.__version__
 
 # %%
 dask.distributed.gc.disable_gc_diagnosis()

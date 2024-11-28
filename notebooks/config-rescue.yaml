@@ -5,9 +5,6 @@
 local_config_path: 'local-config-rescue.yaml'
 
 # ---- standard config for RESCUE ----
-
-out_path: "../results"
-
 variabledefs_path: "../data/variabledefs-rescue.csv"
 
 history_path: "$data_path/historical"
